@@ -1,0 +1,13 @@
+BoneWeight	mesh.h	/^struct BoneWeight {$/
+Face	mesh.h	/^struct Face {$/
+IMPLEMENT_ME	global.h	/^#define IMPLEMENT_ME(file,line)    cout << "METHOD/
+Vert	mesh.h	/^struct Vert {$/
+Viewport	main.cpp	/^struct Viewport {$/
+centerAndScale	mesh.cpp	/^void Mesh::centerAndScale(Skeleton &skel, double s/
+initBoneWeights	skeleton.cpp	/^void Skeleton::initBoneWeights(const char *skinfil/
+inverseKinematics	skeleton.cpp	/^void Skeleton::inverseKinematics(int j, vec3 pos, /
+loadPinocchioFile	skeleton.cpp	/^void Skeleton::loadPinocchioFile(const char *skelf/
+resetPose	skeleton.cpp	/^void Skeleton::resetPose() {$/
+saveRestPose	skeleton.cpp	/^void Skeleton::saveRestPose() {$/
+setJoints	skeleton.cpp	/^void Animation::setJoints(vector<Joint> &joints, d/
+updateSkin	skeleton.cpp	/^void Skeleton::updateSkin(Mesh &mesh) {$/

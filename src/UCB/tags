@@ -1,0 +1,2 @@
+UCBPrint	UCBglobal.h	/^#define UCBPrint(title, msg) std::cout << "UCB::" /
+pixel	Image.h	/^    struct pixel {$/
