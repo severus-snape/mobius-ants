@@ -1,6 +1,8 @@
 #include "mesh.h"
 
-void Mesh::centerAndScale(Skeleton &skel, double scale) {
+//void Mesh::centerAndScale(Skeleton &skel, double scale) {
+	//NO SKELETON
+void Mesh::centerAndScale(double scale) {
     if (verts.empty())
 	    return;
 
@@ -18,7 +20,7 @@ void Mesh::centerAndScale(Skeleton &skel, double scale) {
     for (vector<Vert>::iterator it = verts.begin(); it != verts.end(); ++it) {
 	    it->p = (it->p-center)*maxSizeInv*scale;
     }
-    skel.offsetAndScale(-center, maxSizeInv*scale);
+    //skel.offsetAndScale(-center, maxSizeInv*scale);  //NO SKELETON
 }
 
 

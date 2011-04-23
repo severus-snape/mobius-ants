@@ -1,10 +1,14 @@
 #include "main.h"
+#include <math.h>
 
 using namespace std;
 
 
-// viewport
-struct Viewport {
+//****************************************************
+// Some Classes
+//****************************************************
+class Viewport {
+public:
     Viewport(): mousePos(0.0,0.0) { orientation = identity3D(); };
 	int w, h; // width and height
 	vec2 mousePos;
@@ -12,15 +16,38 @@ struct Viewport {
 };
 
 
+//#define MAX_CART_SPEED 1000
+//#define CART_SPEED	1
+
+#define INITIAL_PE 	 0
+#define INITIAL_VELOCITY		 150
+#define MAX_VELOCITY	10000		
+#define MIN_VELOCITY	0.1
+#define TIMESTEP 	(1.0/MAX_VELOCITY)
+#define VELOCITY_SCALE	0.01
+#define H_SCALE		1000
+
+//double TIMESTEP = 1.0/MAX_VELOCITY;
+int velocity_sign = 1;
+double velocity = INITIAL_VELOCITY;
+double PE = INITIAL_PE;
+
+bool s_pressed = false;
 //****************************************************
 // Global Variables
 //****************************************************
 Viewport viewport;
 UCB::ImageSaver * imgSaver;
 int frameCount = 0;
+double t = 0;
+SplineCoaster *coaster;
+enum {VIEW_FIRSTPERSON, VIEW_THIRDPERSON, VIEW_MAX};
+int viewMode = VIEW_THIRDPERSON;
+
+//<begin> From as9
 Mesh *mesh;
-Skeleton *skel;
-Animation *anim;
+//Skeleton *skel;	//NO SKELETON
+//Animation *anim;
 
 // these variables track which joint is under IK, and where
 int ikJoint;
@@ -30,6 +57,26 @@ double ikDepth;
 bool playanim = false;
 int ik_mode = IK_CCD;
 
+// setup the model view matrix for mesh rendering
+
+//May not need
+/**
+void setupView() {
+	glMatrixMode(GL_MODELVIEW);
+	glLoadIdentity();
+    glTranslatef(0,0,-3);
+    applyMat4(viewport.orientation);
+}
+**/
+//From as9 </begin>
+
+//-------------------------------------------------------------------------------
+/// Called to update the screen at 30 fps.
+void frameTimer(int value) {
+    frameCount++;
+    glutPostRedisplay();
+    glutTimerFunc(1000/30, frameTimer, 1);
+}
 
 
 // A simple helper function to load a mat4 into opengl
@@ -42,37 +89,122 @@ void applyMat4(mat4 &m) {
 	glMultMatrixd(glmat);
 }
 
-// setup the model view matrix for mesh rendering
-void setupView() {
-	glMatrixMode(GL_MODELVIEW);
-	glLoadIdentity();
-    glTranslatef(0,0,-3);
-    applyMat4(viewport.orientation);
+mat4 getBasis(double t) {
+	SplinePoint sp = coaster->sample(t);
+	vec3 forward = coaster->sampleForward(t);
+	vec3 up = coaster->sampleUp(t);
+	vec3 x = forward ^ up;
+	vec3 origin = sp.point;
+	forward = forward.normalize();
+	up = up.normalize();
+	x = x.normalize();
+	return mat4(vec4(forward[VX], up[VX], x[VX], origin[VX]), vec4(forward[VY], up[VY], x[VY], origin[VY]), vec4(forward[VZ], up[VZ], x[VZ], origin[VZ]), vec4(0, 0, 0, 1));
 }
 
-//-------------------------------------------------------------------------------
-/// You will be calling all of your drawing-related code from this function.
-/// Nowhere else in your code should you use glBegin(...) and glEnd() except code
-/// called from this method.
-///
-/// To force a redraw of the screen (eg. after mouse events or the like) simply call
-/// glutPostRedisplay();
+
+mat4 getCameraBasis(double t){
+	SplinePoint sp = coaster->sample(t);
+	vec3 forward = coaster->sampleForward(t);
+	vec3 up = coaster->sampleUp(t);
+	vec3 x = forward ^ up;
+	vec3 origin = sp.point;
+	forward = forward.normalize();
+	up = up.normalize();
+	x = x.normalize();
+	return mat4(vec4(x[VX], up[VX], -forward[VX], origin[VX]), vec4(x[VY], up[VY], -forward[VY], origin[VY]), vec4(x[VZ], up[VZ], -forward[VZ], origin[VZ]), vec4(0, 0, 0, 1));
+}
+
+
+
+// replace this with something cooler!
+void drawMesh(double size, const vec3& meshcolor) {
+	glColor3f(meshcolor[VX],meshcolor[VY],meshcolor[VZ]);
+	//glutSolidTeapot(size);
+	mesh->render();
+}
+
+void drawSkeleton(double size, const vec3& skelcolor) {
+	glColor3f(skelcolor[VX],skelcolor[VY],skelcolor[VZ]);
+	//glutSolidTeapot(size);
+	if (!playanim) { // if not playing an animation draw the skeleton
+        //skel->render(ikJoint);  //NO SKELETON
+    }
+}
+
+
+void drawMeshAndSkeleton(const vec3& meshcolor, const vec3& skelcolor, double t){
+	glPushMatrix();
+	mat4 basis = getBasis(t);
+	applyMat4(basis);
+	drawMesh(1, meshcolor);
+//	drawSkeleton(1, skelcolor);  NOT USING FOR NOW, JUST TRYING TO GET MESH ON COASTER.
+	glPopMatrix();
+}
+
+
 void display() {
 
 	//Clear Buffers
     glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
-
-    setupView();
-    
-    mesh->render();
-
-    if (!playanim) { // if not playing an animation draw the skeleton
-        skel->render(ikJoint);
-    }
-
+	glMatrixMode(GL_MODELVIEW);					// indicate we are specifying camera transformations
+	glLoadIdentity();							// make sure transformation is "zero'd"
+	
+    if (viewMode == VIEW_THIRDPERSON) {
+        glTranslatef(0,-5,-50);
+        applyMat4(viewport.orientation);
+    }else {
+		glTranslatef(0, -1, -1);
+		mat4 basis = getCameraBasis(t).inverse();
+		applyMat4(basis);
+	}
+    coaster->renderWithDisplayList(100,.3,3,.2,0);
+	
+	SplinePoint sp = coaster->sample(t);
+	//vec3 forward = coaster->sampleForward(t);
+	//vec3 up = coaster->sampleUp(t);
+	//vec3 x = forward ^ up;
+	vec3 origin = sp.point;
+	//forward = forward.normalize();
+	//up = up.normalize();
+	//x = x.normalize();
+	
+	PE = INITIAL_PE + H_SCALE * origin[VY];
+	velocity = (PE > 0) ? (INITIAL_VELOCITY - sqrt(PE)) : (INITIAL_VELOCITY + sqrt(PE * -1));
+	
+	
+	if(abs(velocity) < MIN_VELOCITY)
+		velocity_sign = -1 * velocity_sign;
+	
+	//velocity = velocity;
+	
+	double displacement = 0; //velocity * TIMESTEP
+	vec3 prev_point = origin;
+	//cout<<"hit_______"<<endl;
+	while (displacement < velocity * VELOCITY_SCALE){
+		//cout<<"happened"<<endl;
+		t = t + velocity_sign * 3 * TIMESTEP;
+		vec3 point = coaster->sample(t).point;
+		displacement += sqrt((prev_point - point) * (prev_point - point));
+		prev_point = point;
+	}
+	
+	
+	
+	if(t > 1){
+		t = t - floor(t);
+	}
+	
+	drawMeshAndSkeleton(vec3(1.0, 1.0, 0.0), vec3(1.0, 0.0, 0.0), t);
+	
 	//Now that we've drawn on the buffer, swap the drawing buffer and the displaying buffer.
 	glutSwapBuffers();
+	
+	if(s_pressed){
+		imgSaver->saveFrame();
+	}
+
 }
+
 
 
 //-------------------------------------------------------------------------------
@@ -101,63 +233,34 @@ void myKeyboardFunc (unsigned char key, int x, int y) {
 			break;
         case 'S':
         case 's':
-    	    imgSaver->saveFrame();
+    	    //s_pressed = !s_pressed;
             break;
-        case 'a': // add a frame to your animation
-        case 'A':
-            anim->addAsFrame(skel->getJointArray());
-            break;
-        case 'r': // reset skeleton pose
-        case 'R':
-            skel->resetPose();
-            skel->updateSkin(*mesh);
-            break;
-        case 'p': // toggle animation playback mode
-        case 'P':
-            playanim = !playanim;
-            break;
-        case 'm': // switch through ik methods
-        case 'M':
-            ik_mode = (ik_mode+1) % IK_NUMMODES;
+		case 'U':
+		case 'u':
+			//imgSaver->saveFrame();
+			break;
+        case 'V':
+        case 'v':
+            viewMode = (viewMode+1)%VIEW_MAX;
             break;
 	}
-}
-
-void myMouseFunc(int button, int state, int x, int y) {
-    setupView();
-    ikJoint = skel->pickJoint(ikDepth, vec2(x,y));
-}
-
-// helper to set joints from the animation file, using the mouse x to select the animation frame
-void setJointsByAnimation(int x) {
-    if (playanim && anim->orientations.size() > 1) {
-        double t = double(anim->orientations.size()-1) * double(x)/double(glutGet(GLUT_WINDOW_WIDTH));
-        anim->setJoints(skel->getJointArray(), t);
-        skel->updateSkin(*mesh);
-    }
 }
 
 //-------------------------------------------------------------------------------
 /// Called whenever the mouse moves while a button is pressed
 void myActiveMotionFunc(int x, int y) {
-    if (ikJoint != -1 && !playanim) { // if a joint is selected for ik and we're not in animation playback mode, do ik
-        vec3 target = skel->getPos(vec2(x,y), ikDepth);
-        skel->inverseKinematics(ikJoint, target, ik_mode);
-        skel->updateSkin(*mesh);
-    } else { // else mouse movements update the view
-        // Rotate viewport orientation proportional to mouse motion
-        vec2 newMouse = vec2((double)x / glutGet(GLUT_WINDOW_WIDTH),(double)y / glutGet(GLUT_WINDOW_HEIGHT));
-        vec2 diff = (newMouse - viewport.mousePos);
-        double len = diff.length();
-        if (len > .001) {
-            vec3 axis = vec3(diff[1]/len, diff[0]/len, 0);
-            viewport.orientation = rotation3D(axis, 180 * len) * viewport.orientation;
-        }
 
-        //Record the mouse location for drawing crosshairs
-        viewport.mousePos = newMouse;
+    // Rotate viewport orientation proportional to mouse motion
+    vec2 newMouse = vec2((double)x / glutGet(GLUT_WINDOW_WIDTH),(double)y / glutGet(GLUT_WINDOW_HEIGHT));
+    vec2 diff = (newMouse - viewport.mousePos);
+    double len = diff.length();
+    if (len > .001) {
+        vec3 axis = vec3(diff[1]/len, diff[0]/len, 0);
+        viewport.orientation = rotation3D(axis, 180 * len) * viewport.orientation;
     }
-    
+
+    //Record the mouse location for drawing crosshairs
+    viewport.mousePos = newMouse;
 
     //Force a redraw of the window.
     glutPostRedisplay();
@@ -167,10 +270,10 @@ void myActiveMotionFunc(int x, int y) {
 //-------------------------------------------------------------------------------
 /// Called whenever the mouse moves without any buttons pressed.
 void myPassiveMotionFunc(int x, int y) {
-    ikJoint = -1;
-
-    setJointsByAnimation(x);
-
+	ikJoint = -1;
+	
+	//setJointsByAnimation(x);  NO SKELETON
+	
     //Record the mouse location for drawing crosshairs
     viewport.mousePos = vec2((double)x / glutGet(GLUT_WINDOW_WIDTH),(double)y / glutGet(GLUT_WINDOW_HEIGHT));
 
@@ -178,19 +281,13 @@ void myPassiveMotionFunc(int x, int y) {
     glutPostRedisplay();
 }
 
-//-------------------------------------------------------------------------------
-/// Called to update the screen at 30 fps.
-void frameTimer(int value) {
-    frameCount++;
-    glutPostRedisplay();
-    glutTimerFunc(1000/30, frameTimer, 1);
-}
 
 
 
 //-------------------------------------------------------------------------------
 /// Initialize the environment
 int main(int argc,char** argv) {
+	//cout<<"TIMESTEP "<<TIMESTEP<<endl;
 	//Initialize OpenGL
 	glutInit(&argc,argv);
 	glutInitDisplayMode(GLUT_DOUBLE|GLUT_RGBA|GLUT_DEPTH);
@@ -199,9 +296,24 @@ int main(int argc,char** argv) {
 	viewport.w = 600;
 	viewport.h = 600;
 
+	coaster = new SplineCoaster("helix.trk");
+
+/**
+	if (argc < 2) {
+	    cout << "USAGE: coaster coaster.trk" << endl;
+	    return -1;
+    } else {
+        // Create the coaster
+        coaster = new SplineCoaster("helix.trk");
+        if (coaster->bad()) {
+            cout << "Coaster file appears to not have a proper coaster in it" << endl;
+            return -1;
+        }
+    }
+**/
 	//Initialize the screen capture class to save BMP captures
-	//in the current directory, with the prefix "ik"
-	imgSaver = new UCB::ImageSaver("./", "ik");
+	//in the current directory, with the prefix "coaster"
+	imgSaver = new UCB::ImageSaver("./", "coaster");
 
 	//Create OpenGL Window
 	glutInitWindowSize(viewport.w,viewport.h);
@@ -214,7 +326,6 @@ int main(int argc,char** argv) {
 	glutKeyboardFunc(myKeyboardFunc);
 	glutMotionFunc(myActiveMotionFunc);
 	glutPassiveMotionFunc(myPassiveMotionFunc);
-    glutMouseFunc(myMouseFunc);
     frameTimer(0);
 
     glClearColor(.4,.2,1,0);
@@ -232,7 +343,7 @@ int main(int argc,char** argv) {
     {
        float ambient[3] = { .1f, .1f, .1f };
        float diffuse[3] = { .5f, .2f, .5f };
-       float pos[4] = { 0, 0, 0, 1 };
+       float pos[4] = { 5, 0, -5, 0 };
        glLightfv(GL_LIGHT2, GL_AMBIENT, ambient);
        glLightfv(GL_LIGHT2, GL_DIFFUSE, diffuse);
        glLightfv(GL_LIGHT2, GL_POSITION, pos);
@@ -246,20 +357,9 @@ int main(int argc,char** argv) {
     // load a mesh
     mesh = new Mesh();
     mesh->loadFile("Armadillo.obj");
-    // load a matching skeleton
-    skel = new Skeleton();
-    skel->loadPinocchioFile("skeleton.out");
-    mesh->centerAndScale(*skel);
-    // load the correspondence between skeleton and mesh
-    skel->initBoneWeights("attachment.out", *mesh);
-    skel->updateSkin(*mesh);
-    // start a new animation
-    anim = new Animation();
+	mesh->centerAndScale(4);
+	//NO SKELETON
 
-    // note the .out files loaded above were made using pinocchio
-    //  -- a neat free tool for auto-skinning a mesh
-    // get it here: http://www.mit.edu/~ibaran/autorig/pinocchio.html
-    // you can use it to easily replace the default mesh with a mesh of your own making
 
 	//And Go!
 	glutMainLoop();
