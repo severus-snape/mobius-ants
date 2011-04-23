@@ -296,7 +296,7 @@ int main(int argc,char** argv) {
 	viewport.w = 600;
 	viewport.h = 600;
 
-	coaster = new SplineCoaster("helix.trk");
+	coaster = new SplineCoaster("track.trk");
 
 /**
 	if (argc < 2) {

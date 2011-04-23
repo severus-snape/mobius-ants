@@ -342,7 +342,7 @@ void SplineCoaster::render(int samplesPerPt, double crossSectionScale, int suppo
         return;
     }
 
-    renderSupports(supportsPerPt, supportSize, groundY);
+    //renderSupports(supportsPerPt, supportSize, groundY);
 
     renderSweep(polyline, crossSectionScale);
 
