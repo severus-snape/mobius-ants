@@ -356,7 +356,7 @@ int main(int argc,char** argv) {
 
     // load a mesh
     mesh = new Mesh();
-    mesh->loadFile("Armadillo.obj");
+    mesh->loadFile("ladybird.obj");
 	mesh->centerAndScale(4);
 	//NO SKELETON
 
