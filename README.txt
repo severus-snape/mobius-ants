@@ -20,4 +20,4 @@ Potential challenges (may choose to do more than 2 of these):
 3).	 Allow the user to have interactive control of the direction of the creatures using the mouse/arrow keys without having to explicitly place each foot of the creature.
 4).	 Skin the creatures with a mesh rather than a body constructed of OpenGL primitives.
 5).  Added texture mapping to the creatures so that they have non-monochromatic features.
-6).  Have both multiple cameras so that the user can switch between first person (as one of the ants/bipeds) and third person.
+6).  Have multiple cameras so that the user can switch between first person (as one of the ants/bipeds) and third person.
