@@ -237,7 +237,7 @@ void myKeyboardFunc (unsigned char key, int x, int y) {
             break;
 		case 'U':
 		case 'u':
-			//imgSaver->saveFrame();
+			imgSaver->saveFrame();
 			break;
         case 'V':
         case 'v':
