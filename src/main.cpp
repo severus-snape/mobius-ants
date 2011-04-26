@@ -41,13 +41,13 @@ UCB::ImageSaver * imgSaver;
 int frameCount = 0;
 double t = 0;
 SplineCoaster *coaster;
-enum {VIEW_FIRSTPERSON, VIEW_THIRDPERSON, VIEW_MAX};
+enum {VIEW_FIRSTPERSON, VIEW_THIRDPERSON, VIEW_SIDE, VIEW_MAX};
 int viewMode = VIEW_THIRDPERSON;
 
 //<begin> From as9
 Mesh *mesh;
-//Skeleton *skel;	//NO SKELETON
-//Animation *anim;
+Skeleton *skel;	//NO SKELETON
+Animation *anim;
 
 // these variables track which joint is under IK, and where
 int ikJoint;
@@ -127,17 +127,20 @@ void drawSkeleton(double size, const vec3& skelcolor) {
 	glColor3f(skelcolor[VX],skelcolor[VY],skelcolor[VZ]);
 	//glutSolidTeapot(size);
 	if (!playanim) { // if not playing an animation draw the skeleton
-        //skel->render(ikJoint);  //NO SKELETON
+        skel->render(ikJoint); 
     }
 }
 
 
 void drawMeshAndSkeleton(const vec3& meshcolor, const vec3& skelcolor, double t){
 	glPushMatrix();
-	mat4 basis = getBasis(t);
-	applyMat4(basis);
+	mat4 meshBasis = getBasis(t);
+	applyMat4(meshBasis);
+	glRotatef(90,0,1,0);
+	glTranslatef(0,1.9,0);
 	drawMesh(1, meshcolor);
-//	drawSkeleton(1, skelcolor);  NOT USING FOR NOW, JUST TRYING TO GET MESH ON COASTER.
+	drawSkeleton(1, skelcolor); 
+	skel->render(ikJoint);
 	glPopMatrix();
 }
 
@@ -152,8 +155,13 @@ void display() {
     if (viewMode == VIEW_THIRDPERSON) {
         glTranslatef(0,-5,-50);
         applyMat4(viewport.orientation);
-    }else {
-		glTranslatef(0, -1, -1);
+    }else if (viewMode == VIEW_FIRSTPERSON){
+		glTranslatef(0, -3, -2);
+		mat4 basis = getCameraBasis(t).inverse();
+		applyMat4(basis);
+	}else if (viewMode == VIEW_SIDE){
+		glRotatef(90,0,1,0);
+		glTranslatef(6,-1.8,0);
 		mat4 basis = getCameraBasis(t).inverse();
 		applyMat4(basis);
 	}
@@ -194,7 +202,7 @@ void display() {
 		t = t - floor(t);
 	}
 	
-	drawMeshAndSkeleton(vec3(1.0, 1.0, 0.0), vec3(1.0, 0.0, 0.0), t);
+	drawMeshAndSkeleton(vec3(1.0, 1.0, 0.0), vec3(1.0, 1.0, 1.0), t);
 	
 	//Now that we've drawn on the buffer, swap the drawing buffer and the displaying buffer.
 	glutSwapBuffers();
@@ -356,9 +364,16 @@ int main(int argc,char** argv) {
 
     // load a mesh
     mesh = new Mesh();
-    mesh->loadFile("ladybird.obj");
-	mesh->centerAndScale(4);
-	//NO SKELETON
+    mesh->loadFile("Model1.obj");
+	// load a matching skeleton
+    skel = new Skeleton();
+    skel->loadPinocchioFile("skeleton.out");
+    mesh->centerAndScale(*skel, 4);
+    // load the correspondence between skeleton and mesh
+    skel->initBoneWeights("attachment.out", *mesh);
+    skel->updateSkin(*mesh);
+    // start a new animation
+    anim = new Animation();
 
 
 	//And Go!

@@ -64,8 +64,8 @@ public:
 	}
 
     // centers the mesh and scales it to the given scale.  Also scales the skeleton similarly.
-//	void centerAndScale(Skeleton &skel, double scale = 1.0);
-	void centerAndScale(double scale = 1.0);
+	void centerAndScale(Skeleton &skel, double scale = 1.0);
+//	void centerAndScale(double scale = 1.0);
 	
     // face normal
     vec3 getNormal(int f);
