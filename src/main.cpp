@@ -26,6 +26,8 @@ public:
 #define TIMESTEP 	(1.0/MAX_VELOCITY)
 #define VELOCITY_SCALE	0.01
 #define H_SCALE		1000
+#define FOOT1 7
+#define FOOT2 11
 
 //double TIMESTEP = 1.0/MAX_VELOCITY;
 int velocity_sign = 1;
@@ -90,6 +92,14 @@ void applyMat4(mat4 &m) {
 	glMultMatrixd(glmat);
 }
 
+// setup the model view matrix for mesh rendering
+void setupView() {
+	glMatrixMode(GL_MODELVIEW);
+	glLoadIdentity();
+    glTranslatef(0,0,-3);
+    applyMat4(viewport.orientation);
+}
+
 mat4 getBasis(double t, bool inv) {
 	SplinePoint sp = coaster->sample(t);
 	vec3 forward = coaster->sampleForward(t);
@@ -104,10 +114,11 @@ mat4 getBasis(double t, bool inv) {
 }
 
 
-mat4 getCameraBasis(double t){
+mat4 getCameraBasis(double t, bool inv){
 	SplinePoint sp = coaster->sample(t);
 	vec3 forward = coaster->sampleForward(t);
 	vec3 up = coaster->sampleUp(t);
+	if(inv) up = -1 * up;
 	vec3 x = forward ^ up;
 	vec3 origin = sp.point;
 	forward = forward.normalize();
@@ -139,7 +150,12 @@ void drawMeshAndSkeleton(const vec3& meshcolor, const vec3& skelcolor, double t)
 	mat4 meshBasis = getBasis(t, inv);
 	applyMat4(meshBasis);
 	glRotatef(90,0,1,0);
-	glTranslatef(0,1.9,0);
+
+	vector<Joint> jArray = skel->getJointArray();
+	int root = skel->getRoot();
+	vec3 dist = jArray[root].posn-jArray[FOOT1].posn;// feet are at joints 7 and 11 (toes specifically)
+	glTranslatef(0,dist[1],0);//used to be glTranslatef(0,1.9,0)
+
 	drawMesh(1, meshcolor);
 	drawSkeleton(1, skelcolor); 
 	skel->render(ikJoint);
@@ -154,17 +170,18 @@ void display() {
 	glMatrixMode(GL_MODELVIEW);					// indicate we are specifying camera transformations
 	glLoadIdentity();							// make sure transformation is "zero'd"
 	
+	
     if (viewMode == VIEW_THIRDPERSON) {
         glTranslatef(0,-5,-50);
         applyMat4(viewport.orientation);
     }else if (viewMode == VIEW_FIRSTPERSON){
 		glTranslatef(0, -3, -2);
-		mat4 basis = getCameraBasis(t).inverse();
+		mat4 basis = getCameraBasis(t, inv).inverse();
 		applyMat4(basis);
 	}else if (viewMode == VIEW_SIDE){
 		glRotatef(90,0,1,0);
-		glTranslatef(6,-1.8,0);
-		mat4 basis = getCameraBasis(t).inverse();
+		glTranslatef(6,-2.5,0);
+		mat4 basis = getCameraBasis(t, inv).inverse();
 		applyMat4(basis);
 	}
     coaster->renderWithDisplayList(100,.3,3,.2,0);
@@ -256,21 +273,34 @@ void myKeyboardFunc (unsigned char key, int x, int y) {
 	}
 }
 
+void myMouseFunc(int button, int state, int x, int y) {
+	if (viewMode == VIEW_SIDE){
+		setupView();
+		ikJoint = skel->pickJoint(ikDepth, vec2(x,y));
+	}
+}
+
+
 //-------------------------------------------------------------------------------
 /// Called whenever the mouse moves while a button is pressed
 void myActiveMotionFunc(int x, int y) {
-
-    // Rotate viewport orientation proportional to mouse motion
-    vec2 newMouse = vec2((double)x / glutGet(GLUT_WINDOW_WIDTH),(double)y / glutGet(GLUT_WINDOW_HEIGHT));
-    vec2 diff = (newMouse - viewport.mousePos);
-    double len = diff.length();
-    if (len > .001) {
-        vec3 axis = vec3(diff[1]/len, diff[0]/len, 0);
-        viewport.orientation = rotation3D(axis, 180 * len) * viewport.orientation;
-    }
-
-    //Record the mouse location for drawing crosshairs
-    viewport.mousePos = newMouse;
+	if (ikJoint != -1 && !playanim) { // if a joint is selected for ik and we're not in animation playback mode, do ik
+		vec3 target = skel->getPos(vec2(x,y), ikDepth);
+        skel->inverseKinematics(ikJoint, target, ik_mode);
+        skel->updateSkin(*mesh);
+    } else if (viewMode == VIEW_THIRDPERSON){ // else mouse movements update the view
+        // Rotate viewport orientation proportional to mouse motion
+		vec2 newMouse = vec2((double)x / glutGet(GLUT_WINDOW_WIDTH),(double)y / glutGet(GLUT_WINDOW_HEIGHT));
+	    vec2 diff = (newMouse - viewport.mousePos);
+ 	    double len = diff.length();
+	    if (len > .001) {
+	        vec3 axis = vec3(diff[1]/len, diff[0]/len, 0);
+	        viewport.orientation = rotation3D(axis, 180 * len) * viewport.orientation;
+	    }
+	
+	    //Record the mouse location for drawing crosshairs
+	    viewport.mousePos = newMouse;
+	}
 
     //Force a redraw of the window.
     glutPostRedisplay();
@@ -336,6 +366,7 @@ int main(int argc,char** argv) {
 	glutKeyboardFunc(myKeyboardFunc);
 	glutMotionFunc(myActiveMotionFunc);
 	glutPassiveMotionFunc(myPassiveMotionFunc);
+	glutMouseFunc(myMouseFunc);
     frameTimer(0);
 
     glClearColor(.4,.2,1,0);
