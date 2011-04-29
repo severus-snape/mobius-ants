@@ -43,6 +43,7 @@ double t = 0;
 SplineCoaster *coaster;
 enum {VIEW_FIRSTPERSON, VIEW_THIRDPERSON, VIEW_SIDE, VIEW_MAX};
 int viewMode = VIEW_THIRDPERSON;
+bool inv = false;
 
 //<begin> From as9
 Mesh *mesh;
@@ -89,10 +90,11 @@ void applyMat4(mat4 &m) {
 	glMultMatrixd(glmat);
 }
 
-mat4 getBasis(double t) {
+mat4 getBasis(double t, bool inv) {
 	SplinePoint sp = coaster->sample(t);
 	vec3 forward = coaster->sampleForward(t);
 	vec3 up = coaster->sampleUp(t);
+	if(inv) up = -1 * up;
 	vec3 x = forward ^ up;
 	vec3 origin = sp.point;
 	forward = forward.normalize();
@@ -134,7 +136,7 @@ void drawSkeleton(double size, const vec3& skelcolor) {
 
 void drawMeshAndSkeleton(const vec3& meshcolor, const vec3& skelcolor, double t){
 	glPushMatrix();
-	mat4 meshBasis = getBasis(t);
+	mat4 meshBasis = getBasis(t, inv);
 	applyMat4(meshBasis);
 	glRotatef(90,0,1,0);
 	glTranslatef(0,1.9,0);
@@ -197,8 +199,8 @@ void display() {
 	}
 	
 	
-	
 	if(t > 1){
+		inv = !inv;
 		t = t - floor(t);
 	}
 	
