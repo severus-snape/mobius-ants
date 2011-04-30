@@ -397,7 +397,7 @@ int main(int argc,char** argv) {
 
     // load a mesh
     mesh = new Mesh();
-    mesh->loadFile("Model1.obj");
+    mesh->loadFile("ant2.obj");
 	// load a matching skeleton
     skel = new Skeleton();
     skel->loadPinocchioFile("skeleton.out");
