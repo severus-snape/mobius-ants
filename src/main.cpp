@@ -26,8 +26,11 @@ public:
 #define TIMESTEP 	(1.0/MAX_VELOCITY)
 #define VELOCITY_SCALE	0.01
 #define H_SCALE		1000
-#define FOOT1 7
-#define FOOT2 11
+#define FRONTFOOT1 14
+#define FRONTFOOT2 17
+#define BACKFOOT1 7
+#define BACKFOOT2 11
+#define PI 3.14159265
 
 //double TIMESTEP = 1.0/MAX_VELOCITY;
 int velocity_sign = 1;
@@ -55,6 +58,8 @@ Animation *anim;
 // these variables track which joint is under IK, and where
 int ikJoint;
 double ikDepth;
+vec3 FF1Initial;
+vec3 FF2Initial;
 
 // ui modes
 bool playanim = false;
@@ -153,8 +158,40 @@ void drawMeshAndSkeleton(const vec3& meshcolor, const vec3& skelcolor, double t)
 
 	vector<Joint> jArray = skel->getJointArray();
 	int root = skel->getRoot();
-	vec3 dist = jArray[root].posn-jArray[FOOT1].posn;// feet are at joints 7 and 11 (toes specifically)
-	glTranslatef(0,dist[1],0);//used to be glTranslatef(0,1.9,0)
+
+	double xInterp1 = (12*PI)*t;
+	double xInterp2 = xInterp1+PI;
+	xInterp1 = 0.4*sin(xInterp1);
+	xInterp2 = 0.4*sin(xInterp2);
+	double yInterp1 = (6*PI)*t;
+	double yInterp2 = yInterp1+PI;
+	if(sin(yInterp1)<0){
+		yInterp1 = 0.4*sin(yInterp1);
+	} else {
+		yInterp1 = 0;
+	}
+	if(sin(yInterp2)>0){
+		yInterp2 = 0.4*sin(yInterp2);
+	} else {
+		yInterp2 = 0;
+	}
+	vec3 targetFF1 = vec3(FF1Initial[0],FF1Initial[1]+xInterp1,FF1Initial[2]);
+	vec3 targetFF2 = vec3(FF2Initial[0],FF2Initial[1]+xInterp2,FF2Initial[2]+yInterp2);
+
+	skel->inverseKinematics(FRONTFOOT1, targetFF1, ik_mode);
+	skel->inverseKinematics(FRONTFOOT2, targetFF2, ik_mode);
+	vec3 dist1 = jArray[root].posn-jArray[FRONTFOOT1].posn;// feet are at joints 7 and 11 (toes specifically)
+	vec3 dist2 = jArray[root].posn-jArray[FRONTFOOT2].posn;
+	//cout << targetFF1 << endl;
+	if(dist2[1]>dist1[1]){
+		//glTranslatef(0,1.9,0);
+		glTranslatef(0,-dist1[1],0);//used to be glTranslatef(0,1.9,0)
+	}
+	else {
+		//glTranslatef(0,1.9,0);
+		glTranslatef(0,-dist2[1],0);
+	}
+	glRotatef(90,1,0,0);
 
 	drawMesh(1, meshcolor);
 	drawSkeleton(1, skelcolor); 
@@ -175,12 +212,12 @@ void display() {
         glTranslatef(0,-5,-50);
         applyMat4(viewport.orientation);
     }else if (viewMode == VIEW_FIRSTPERSON){
-		glTranslatef(0, -3, -2);
+		glTranslatef(0, -1, -2);
 		mat4 basis = getCameraBasis(t, inv).inverse();
 		applyMat4(basis);
 	}else if (viewMode == VIEW_SIDE){
 		glRotatef(90,0,1,0);
-		glTranslatef(6,-2.5,0);
+		glTranslatef(6,-1.5,0);
 		mat4 basis = getCameraBasis(t, inv).inverse();
 		applyMat4(basis);
 	}
@@ -408,6 +445,9 @@ int main(int argc,char** argv) {
     // start a new animation
     anim = new Animation();
 
+	vector<Joint> initialJoints = skel->getJointArray();
+	FF1Initial = initialJoints[FRONTFOOT1].posn;
+	FF2Initial = initialJoints[FRONTFOOT2].posn;
 
 	//And Go!
 	glutMainLoop();
