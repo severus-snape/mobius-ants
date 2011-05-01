@@ -26,10 +26,10 @@ public:
 #define TIMESTEP 	(1.0/MAX_VELOCITY)
 #define VELOCITY_SCALE	0.01
 #define H_SCALE		1000
-#define FRONTFOOT1 14
-#define FRONTFOOT2 17
-#define BACKFOOT1 7
-#define BACKFOOT2 11
+#define FRONTFOOT1 14 //right front
+#define FRONTFOOT2 17 //left front
+#define BACKFOOT1 7 //right back
+#define BACKFOOT2 11 //left back
 #define PI 3.14159265
 
 //double TIMESTEP = 1.0/MAX_VELOCITY;
@@ -60,6 +60,8 @@ int ikJoint;
 double ikDepth;
 vec3 FF1Initial;
 vec3 FF2Initial;
+vec3 BF1Initial;
+vec3 BF2Initial;
 
 // ui modes
 bool playanim = false;
@@ -177,9 +179,13 @@ void drawMeshAndSkeleton(const vec3& meshcolor, const vec3& skelcolor, double t)
 	}
 	vec3 targetFF1 = vec3(FF1Initial[0],FF1Initial[1]+xInterp1,FF1Initial[2]-yInterp1);
 	vec3 targetFF2 = vec3(FF2Initial[0],FF2Initial[1]+xInterp2,FF2Initial[2]-yInterp2);
+	vec3 targetBF1 = vec3(BF1Initial[0],BF1Initial[1]+xInterp2,BF1Initial[2]-yInterp2);
+	vec3 targetBF2 = vec3(BF2Initial[0],BF2Initial[1]+xInterp1,BF2Initial[2]-yInterp1);
 
 	skel->inverseKinematics(FRONTFOOT1, targetFF1, ik_mode);
 	skel->inverseKinematics(FRONTFOOT2, targetFF2, ik_mode);
+	skel->inverseKinematics(BACKFOOT1, targetBF1, ik_mode);
+	skel->inverseKinematics(BACKFOOT2, targetBF2, ik_mode);
 	vec3 dist1 = jArray[root].posn-jArray[FRONTFOOT1].posn;// feet are at joints 7 and 11 (toes specifically)
 	vec3 dist2 = jArray[root].posn-jArray[FRONTFOOT2].posn;
 	cout << yInterp1 << endl;
@@ -448,6 +454,8 @@ int main(int argc,char** argv) {
 	vector<Joint> initialJoints = skel->getJointArray();
 	FF1Initial = initialJoints[FRONTFOOT1].posn;
 	FF2Initial = initialJoints[FRONTFOOT2].posn;
+	BF1Initial = vec3(FF1Initial[0],FF1Initial[1]-2,FF1Initial[2]);
+	BF2Initial = vec3(FF2Initial[0],FF2Initial[1]-2,FF2Initial[2]);
 
 	//And Go!
 	glutMainLoop();
