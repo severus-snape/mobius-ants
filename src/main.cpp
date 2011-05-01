@@ -20,7 +20,7 @@ public:
 //#define CART_SPEED	1
 
 #define INITIAL_PE 	 0
-#define INITIAL_VELOCITY		 150
+#define INITIAL_VELOCITY		 25
 #define MAX_VELOCITY	10000		
 #define MIN_VELOCITY	0.1
 #define TIMESTEP 	(1.0/MAX_VELOCITY)
@@ -163,33 +163,33 @@ void drawMeshAndSkeleton(const vec3& meshcolor, const vec3& skelcolor, double t)
 	double xInterp2 = xInterp1+PI;
 	xInterp1 = 0.4*sin(xInterp1);
 	xInterp2 = 0.4*sin(xInterp2);
-	double yInterp1 = (6*PI)*t;
-	double yInterp2 = yInterp1+PI;
-	if(sin(yInterp1)<0){
-		yInterp1 = 0.4*sin(yInterp1);
+	double yInterp1 = (12*PI)*t;
+	double yInterp2 = ((12*PI)*t)+PI;
+	if(cos(yInterp1)>0){
+		yInterp1 = 0.4*cos(yInterp1);
 	} else {
 		yInterp1 = 0;
 	}
-	if(sin(yInterp2)>0){
-		yInterp2 = 0.4*sin(yInterp2);
+	if(cos(yInterp2)>0){
+		yInterp2 = 0.4*cos(yInterp2);
 	} else {
 		yInterp2 = 0;
 	}
-	vec3 targetFF1 = vec3(FF1Initial[0],FF1Initial[1]+xInterp1,FF1Initial[2]);
-	vec3 targetFF2 = vec3(FF2Initial[0],FF2Initial[1]+xInterp2,FF2Initial[2]+yInterp2);
+	vec3 targetFF1 = vec3(FF1Initial[0],FF1Initial[1]+xInterp1,FF1Initial[2]-yInterp1);
+	vec3 targetFF2 = vec3(FF2Initial[0],FF2Initial[1]+xInterp2,FF2Initial[2]-yInterp2);
 
 	skel->inverseKinematics(FRONTFOOT1, targetFF1, ik_mode);
 	skel->inverseKinematics(FRONTFOOT2, targetFF2, ik_mode);
 	vec3 dist1 = jArray[root].posn-jArray[FRONTFOOT1].posn;// feet are at joints 7 and 11 (toes specifically)
 	vec3 dist2 = jArray[root].posn-jArray[FRONTFOOT2].posn;
-	//cout << targetFF1 << endl;
+	cout << yInterp1 << endl;
 	if(dist2[1]>dist1[1]){
-		//glTranslatef(0,1.9,0);
-		glTranslatef(0,-dist1[1],0);//used to be glTranslatef(0,1.9,0)
+		glTranslatef(0,1.9,0);
+		//glTranslatef(0,-dist1[1],0);//used to be glTranslatef(0,1.9,0)
 	}
 	else {
-		//glTranslatef(0,1.9,0);
-		glTranslatef(0,-dist2[1],0);
+		glTranslatef(0,1.9,0);
+		//glTranslatef(0,-dist2[1],0);
 	}
 	glRotatef(90,1,0,0);
 
@@ -232,8 +232,8 @@ void display() {
 	//up = up.normalize();
 	//x = x.normalize();
 	
-	PE = INITIAL_PE + H_SCALE * origin[VY];
-	velocity = (PE > 0) ? (INITIAL_VELOCITY - sqrt(PE)) : (INITIAL_VELOCITY + sqrt(PE * -1));
+	//PE = INITIAL_PE + H_SCALE * origin[VY];
+	velocity = INITIAL_VELOCITY;//(PE > 0) ? (INITIAL_VELOCITY - sqrt(PE)) : (INITIAL_VELOCITY + sqrt(PE * -1));
 	
 	
 	if(abs(velocity) < MIN_VELOCITY)
