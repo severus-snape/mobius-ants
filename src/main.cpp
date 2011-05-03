@@ -28,8 +28,20 @@ public:
 #define H_SCALE		1000
 #define FRONTFOOT1 14 //right front
 #define FRONTFOOT2 17 //left front
+#define FRONTKNEE1 13//right
+#define FRONTKNEE2 16//left
 #define BACKFOOT1 7 //right back
 #define BACKFOOT2 11 //left back
+#define BACKANKLE1 6 //right
+#define BACKANKLE2 10 //left
+#define BACKKNEE1 5 //right
+#define BACKKNEE2 9 //left
+#define HIP1 4 //right
+#define HIP2 8 //left
+#define SHOULDER1 12//right
+#define SHOULDER2 15//left
+#define SPINE 1
+#define PELVIS 2
 #define PI 3.14159265
 
 //double TIMESTEP = 1.0/MAX_VELOCITY;
@@ -62,6 +74,19 @@ vec3 FF1Initial;
 vec3 FF2Initial;
 vec3 BF1Initial;
 vec3 BF2Initial;
+vec3 FK1Initial;
+vec3 FK2Initial;
+vec3 BK1Initial;
+vec3 BA1Initial;
+vec3 BK2Initial;
+vec3 BA2Initial;
+vec3 H1Initial;
+vec3 H2Initial;
+vec3 S1Initial;
+vec3 S2Initial;
+vec3 SpInitial;
+vec3 PInitial;
+
 
 // ui modes
 bool playanim = false;
@@ -178,30 +203,53 @@ void drawMeshAndSkeleton(const vec3& meshcolor, const vec3& skelcolor, double t)
 		yInterp2 = 0;
 	}
 	vec3 targetFF1 = vec3(FF1Initial[0],FF1Initial[1]+xInterp1,FF1Initial[2]-yInterp1);
+	vec3 targetFK1 = vec3(FK1Initial[0],FK1Initial[1]+(xInterp1/2),FK1Initial[2]-(yInterp1/2));
 	vec3 targetFF2 = vec3(FF2Initial[0],FF2Initial[1]+xInterp2,FF2Initial[2]-yInterp2);
-	vec3 targetBF1 = vec3(BF1Initial[0],BF1Initial[1]+xInterp2,BF1Initial[2]-yInterp2);
-	vec3 targetBF2 = vec3(BF2Initial[0],BF2Initial[1]+xInterp1,BF2Initial[2]-yInterp1);
+	vec3 targetFK2 = vec3(FK2Initial[0],FK2Initial[1]+(xInterp2/2),FK2Initial[2]-(yInterp2/2));
 
+	//vec3 targetBF1 = vec3(BF1Initial[0],BF1Initial[1]+xInterp2,BF1Initial[2]-yInterp2);
+	//vec3 targetBF2 = vec3(BF2Initial[0],BF2Initial[1]+xInterp1,BF2Initial[2]-yInterp1);
+	vec3 targetBK1 = vec3(BK1Initial[0],BK1Initial[1]+(xInterp2/2),BK1Initial[2]-(yInterp2/2));
+	vec3 targetBK2 = vec3(BK2Initial[0],BK2Initial[1]+(xInterp1/2),BK2Initial[2]-(yInterp1/2));
+	vec3 targetBA1 = vec3(BA1Initial[0],BA1Initial[1]+xInterp2,BA1Initial[2]-yInterp2);
+	vec3 targetBA2 = vec3(BA2Initial[0],BA2Initial[1]+xInterp1,BA2Initial[2]-yInterp1);
+
+	skel->inverseKinematics(FRONTKNEE1, targetFK1, ik_mode);
 	skel->inverseKinematics(FRONTFOOT1, targetFF1, ik_mode);
+	skel->inverseKinematics(FRONTKNEE2, targetFK2, ik_mode);
 	skel->inverseKinematics(FRONTFOOT2, targetFF2, ik_mode);
-	skel->inverseKinematics(BACKFOOT1, targetBF1, ik_mode);
-	skel->inverseKinematics(BACKFOOT2, targetBF2, ik_mode);
-	vec3 dist1 = jArray[root].posn-jArray[FRONTFOOT1].posn;// feet are at joints 7 and 11 (toes specifically)
+
+	//skel->inverseKinematics(BACKFOOT1, targetBF1, ik_mode);
+	skel->inverseKinematics(BACKANKLE1, targetBA1, ik_mode);
+	skel->inverseKinematics(BACKKNEE1, targetBK1, ik_mode);
+	skel->inverseKinematics(HIP1, H1Initial, ik_mode);
+	
+	//skel->inverseKinematics(BACKFOOT2, targetBF2, ik_mode);
+	skel->inverseKinematics(BACKANKLE2, targetBA2, ik_mode);
+	skel->inverseKinematics(BACKKNEE2, targetBK2, ik_mode);
+	skel->inverseKinematics(HIP2, H2Initial, ik_mode);
+
+	skel->inverseKinematics(SHOULDER1, S1Initial, ik_mode);
+	skel->inverseKinematics(SHOULDER2, S2Initial, ik_mode);
+	skel->inverseKinematics(PELVIS, PInitial, ik_mode);
+	skel->inverseKinematics(SPINE, SpInitial, ik_mode);
+
+	vec3 dist1 = jArray[root].posn-jArray[FRONTFOOT1].posn;
 	vec3 dist2 = jArray[root].posn-jArray[FRONTFOOT2].posn;
-	cout << yInterp1 << endl;
 	if(dist2[1]>dist1[1]){
-		glTranslatef(0,1.9,0);
-		//glTranslatef(0,-dist1[1],0);//used to be glTranslatef(0,1.9,0)
+		//glTranslatef(0,1.9,0);
+		glTranslatef(0,-dist1[1],0);//used to be glTranslatef(0,1.9,0)
 	}
 	else {
-		glTranslatef(0,1.9,0);
-		//glTranslatef(0,-dist2[1],0);
+		//glTranslatef(0,1.9,0);
+		glTranslatef(0,-dist2[1],0);
 	}
 	glRotatef(90,1,0,0);
 
 	drawMesh(1, meshcolor);
 	drawSkeleton(1, skelcolor); 
 	skel->render(ikJoint);
+	skel->updateSkin(*mesh);
 	glPopMatrix();
 }
 
@@ -331,7 +379,7 @@ void myActiveMotionFunc(int x, int y) {
 		vec3 target = skel->getPos(vec2(x,y), ikDepth);
         skel->inverseKinematics(ikJoint, target, ik_mode);
         skel->updateSkin(*mesh);
-    } else if (viewMode == VIEW_THIRDPERSON){ // else mouse movements update the view
+    } else if (true){//viewMode == VIEW_THIRDPERSON){ // else mouse movements update the view
         // Rotate viewport orientation proportional to mouse motion
 		vec2 newMouse = vec2((double)x / glutGet(GLUT_WINDOW_WIDTH),(double)y / glutGet(GLUT_WINDOW_HEIGHT));
 	    vec2 diff = (newMouse - viewport.mousePos);
@@ -454,8 +502,23 @@ int main(int argc,char** argv) {
 	vector<Joint> initialJoints = skel->getJointArray();
 	FF1Initial = initialJoints[FRONTFOOT1].posn;
 	FF2Initial = initialJoints[FRONTFOOT2].posn;
-	BF1Initial = vec3(FF1Initial[0],FF1Initial[1]-2,FF1Initial[2]);
-	BF2Initial = vec3(FF2Initial[0],FF2Initial[1]-2,FF2Initial[2]);
+	FK1Initial = initialJoints[FRONTKNEE1].posn;
+	FK2Initial = initialJoints[FRONTKNEE2].posn;
+
+	H1Initial = initialJoints[HIP1].posn;
+	H2Initial = initialJoints[HIP2].posn;
+
+	//BF1Initial = vec3(FF1Initial[0],FF1Initial[1]-2,FF1Initial[2]);
+	BA1Initial = vec3(FF1Initial[0],FF1Initial[1]-2,FF1Initial[2]-0.2);
+	BK1Initial = initialJoints[BACKKNEE1].posn;
+	//BF2Initial = vec3(FF2Initial[0],FF2Initial[1]-2,FF2Initial[2]);
+	BA2Initial = vec3(FF2Initial[0],FF2Initial[1]-2,FF2Initial[2]-0.2);
+	BK2Initial = initialJoints[BACKKNEE2].posn;
+
+	S1Initial = initialJoints[SHOULDER1].posn;
+	S2Initial = initialJoints[SHOULDER2].posn;
+	SpInitial = initialJoints[SPINE].posn;
+	PInitial = initialJoints[PELVIS].posn;
 
 	//And Go!
 	glutMainLoop();
