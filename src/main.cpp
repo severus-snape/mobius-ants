@@ -20,7 +20,7 @@ public:
 //#define CART_SPEED	1
 
 #define INITIAL_PE 	 0
-#define INITIAL_VELOCITY		 25
+#define INITIAL_VELOCITY		 10
 #define MAX_VELOCITY	10000		
 #define MIN_VELOCITY	0.1
 #define TIMESTEP 	(1.0/MAX_VELOCITY)
@@ -42,6 +42,7 @@ public:
 #define SHOULDER2 15//left
 #define SPINE 1
 #define PELVIS 2
+#define HEAD 3
 #define PI 3.14159265
 
 //double TIMESTEP = 1.0/MAX_VELOCITY;
@@ -58,7 +59,7 @@ UCB::ImageSaver * imgSaver;
 int frameCount = 0;
 double t = 0;
 SplineCoaster *coaster;
-enum {VIEW_FIRSTPERSON, VIEW_THIRDPERSON, VIEW_SIDE, VIEW_MAX};
+enum {VIEW_FIRSTPERSON, VIEW_THIRDPERSON, VIEW_SIDE1, VIEW_SIDE2, VIEW_MAX};
 int viewMode = VIEW_THIRDPERSON;
 bool inv = false;
 
@@ -86,6 +87,7 @@ vec3 S1Initial;
 vec3 S2Initial;
 vec3 SpInitial;
 vec3 PInitial;
+vec3 HeInitial;
 
 
 // ui modes
@@ -186,12 +188,12 @@ void drawMeshAndSkeleton(const vec3& meshcolor, const vec3& skelcolor, double t)
 	vector<Joint> jArray = skel->getJointArray();
 	int root = skel->getRoot();
 
-	double xInterp1 = (12*PI)*t;
+	double xInterp1 = (30*PI)*t;
 	double xInterp2 = xInterp1+PI;
 	xInterp1 = 0.4*sin(xInterp1);
 	xInterp2 = 0.4*sin(xInterp2);
-	double yInterp1 = (12*PI)*t;
-	double yInterp2 = ((12*PI)*t)+PI;
+	double yInterp1 = (30*PI)*t;
+	double yInterp2 = ((30*PI)*t)+PI;
 	if(cos(yInterp1)>0){
 		yInterp1 = 0.4*cos(yInterp1);
 	} else {
@@ -202,6 +204,12 @@ void drawMeshAndSkeleton(const vec3& meshcolor, const vec3& skelcolor, double t)
 	} else {
 		yInterp2 = 0;
 	}
+
+	vec3 point = coaster->sample(t).point;
+	vec3 forwardPoint = coaster->sample(t+(0.015)).point;
+	yInterp1 += (meshBasis.inverse()*forwardPoint - meshBasis.inverse()*point)[1];
+	yInterp2 += (meshBasis.inverse()*forwardPoint - meshBasis.inverse()*point)[1];
+
 	vec3 targetFF1 = vec3(FF1Initial[0],FF1Initial[1]+xInterp1,FF1Initial[2]-yInterp1);
 	vec3 targetFK1 = vec3(FK1Initial[0],FK1Initial[1]+(xInterp1/2),FK1Initial[2]-(yInterp1/2));
 	vec3 targetFF2 = vec3(FF2Initial[0],FF2Initial[1]+xInterp2,FF2Initial[2]-yInterp2);
@@ -234,23 +242,23 @@ void drawMeshAndSkeleton(const vec3& meshcolor, const vec3& skelcolor, double t)
 	skel->inverseKinematics(PELVIS, PInitial, ik_mode);
 	skel->inverseKinematics(SPINE, SpInitial, ik_mode);
 
-	vec3 dist1 = jArray[root].posn-jArray[FRONTFOOT1].posn;
-	vec3 dist2 = jArray[root].posn-jArray[FRONTFOOT2].posn;
-	if(dist2[1]>dist1[1]){
-		//glTranslatef(0,1.9,0);
-		glTranslatef(0,-dist1[1],0);//used to be glTranslatef(0,1.9,0)
-	}
-	else {
-		//glTranslatef(0,1.9,0);
-		glTranslatef(0,-dist2[1],0);
-	}
+	//vec3 HeTarget = vec3(HeInitial[0]+(0.5*sin(20*PI*t)),HeInitial[1],HeInitial[2]+(0.5*sin(20*PI*t)));
+	//skel->inverseKinematics(HEAD, HeTarget, ik_mode);
+
+	glTranslatef(0,0.4,0);
 	glRotatef(90,1,0,0);
 
 	drawMesh(1, meshcolor);
 	drawSkeleton(1, skelcolor); 
 	skel->render(ikJoint);
 	skel->updateSkin(*mesh);
+
 	glPopMatrix();
+	/*glPushMatrix();
+	meshBasis = getBasis((t+(-0.01)+(0.01*xInterp2)), inv);
+	applyMat4(meshBasis);
+	glutSolidTeapot(1);
+	glPopMatrix();*/
 }
 
 
@@ -269,11 +277,18 @@ void display() {
 		glTranslatef(0, -1, -2);
 		mat4 basis = getCameraBasis(t, inv).inverse();
 		applyMat4(basis);
-	}else if (viewMode == VIEW_SIDE){
+	}else if (viewMode == VIEW_SIDE1){
 		glRotatef(90,0,1,0);
 		glTranslatef(6,-1.5,0);
 		mat4 basis = getCameraBasis(t, inv).inverse();
 		applyMat4(basis);
+		//applyMat4(viewport.orientation);
+	}else if (viewMode == VIEW_SIDE2){
+		glRotatef(270,0,1,0);
+		glTranslatef(-8,1.5,0);
+		mat4 basis = getCameraBasis(t, inv).inverse();
+		applyMat4(basis);
+		//applyMat4(viewport.orientation);
 	}
     coaster->renderWithDisplayList(100,.3,3,.2,0);
 	
@@ -298,14 +313,17 @@ void display() {
 	double displacement = 0; //velocity * TIMESTEP
 	vec3 prev_point = origin;
 	//cout<<"hit_______"<<endl;
-	while (displacement < velocity * VELOCITY_SCALE){
+	double prevT = t;
+	while ((displacement < velocity * VELOCITY_SCALE)){
 		//cout<<"happened"<<endl;
 		t = t + velocity_sign * 3 * TIMESTEP;
+		if(abs(sin(30*PI*t)) >= 0.98){
+			break;
+		}
 		vec3 point = coaster->sample(t).point;
 		displacement += sqrt((prev_point - point) * (prev_point - point));
 		prev_point = point;
 	}
-	
 	
 	if(t > 1){
 		inv = !inv;
@@ -365,10 +383,10 @@ void myKeyboardFunc (unsigned char key, int x, int y) {
 }
 
 void myMouseFunc(int button, int state, int x, int y) {
-	if (viewMode == VIEW_SIDE){
+	/*if (viewMode == VIEW_SIDE){
 		setupView();
 		ikJoint = skel->pickJoint(ikDepth, vec2(x,y));
-	}
+	}*/
 }
 
 
@@ -519,6 +537,7 @@ int main(int argc,char** argv) {
 	S2Initial = initialJoints[SHOULDER2].posn;
 	SpInitial = initialJoints[SPINE].posn;
 	PInitial = initialJoints[PELVIS].posn;
+	HeInitial = initialJoints[HEAD].posn;
 
 	//And Go!
 	glutMainLoop();
