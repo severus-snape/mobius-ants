@@ -207,20 +207,21 @@ void drawMeshAndSkeleton(const vec3& meshcolor, const vec3& skelcolor, double t)
 
 	vec3 point = coaster->sample(t).point;
 	vec3 forwardPoint = coaster->sample(t+(0.015)).point;
-	yInterp1 += (meshBasis.inverse()*forwardPoint - meshBasis.inverse()*point)[1];
-	yInterp2 += (meshBasis.inverse()*forwardPoint - meshBasis.inverse()*point)[1];
+	vec3 backPoint = coaster->sample(t-(0.01)).point;
+	double addFront = (meshBasis.inverse()*forwardPoint - meshBasis.inverse()*point)[1];
+	double addBack = (meshBasis.inverse()*backPoint - meshBasis.inverse()*point)[1];
 
-	vec3 targetFF1 = vec3(FF1Initial[0],FF1Initial[1]+xInterp1,FF1Initial[2]-yInterp1);
-	vec3 targetFK1 = vec3(FK1Initial[0],FK1Initial[1]+(xInterp1/2),FK1Initial[2]-(yInterp1/2));
-	vec3 targetFF2 = vec3(FF2Initial[0],FF2Initial[1]+xInterp2,FF2Initial[2]-yInterp2);
-	vec3 targetFK2 = vec3(FK2Initial[0],FK2Initial[1]+(xInterp2/2),FK2Initial[2]-(yInterp2/2));
+	vec3 targetFF1 = vec3(FF1Initial[0],FF1Initial[1]+xInterp1,FF1Initial[2]-(yInterp1+addFront));
+	vec3 targetFK1 = vec3(FK1Initial[0],FK1Initial[1]+(xInterp1/2),FK1Initial[2]-((yInterp1+addFront)/2));
+	vec3 targetFF2 = vec3(FF2Initial[0],FF2Initial[1]+xInterp2,FF2Initial[2]-(yInterp2+addFront));
+	vec3 targetFK2 = vec3(FK2Initial[0],FK2Initial[1]+(xInterp2/2),FK2Initial[2]-((yInterp2+addFront)/2));
 
 	//vec3 targetBF1 = vec3(BF1Initial[0],BF1Initial[1]+xInterp2,BF1Initial[2]-yInterp2);
 	//vec3 targetBF2 = vec3(BF2Initial[0],BF2Initial[1]+xInterp1,BF2Initial[2]-yInterp1);
-	vec3 targetBK1 = vec3(BK1Initial[0],BK1Initial[1]+(xInterp2/2),BK1Initial[2]-(yInterp2/2));
-	vec3 targetBK2 = vec3(BK2Initial[0],BK2Initial[1]+(xInterp1/2),BK2Initial[2]-(yInterp1/2));
-	vec3 targetBA1 = vec3(BA1Initial[0],BA1Initial[1]+xInterp2,BA1Initial[2]-yInterp2);
-	vec3 targetBA2 = vec3(BA2Initial[0],BA2Initial[1]+xInterp1,BA2Initial[2]-yInterp1);
+	vec3 targetBK1 = vec3(BK1Initial[0],BK1Initial[1]+(xInterp2/2),BK1Initial[2]-((yInterp2+addBack)/2));
+	vec3 targetBK2 = vec3(BK2Initial[0],BK2Initial[1]+(xInterp1/2),BK2Initial[2]-((yInterp1+addBack)/2));
+	vec3 targetBA1 = vec3(BA1Initial[0],BA1Initial[1]+xInterp2,BA1Initial[2]-(yInterp2+addBack));
+	vec3 targetBA2 = vec3(BA2Initial[0],BA2Initial[1]+xInterp1,BA2Initial[2]-(yInterp1+addBack));
 
 	skel->inverseKinematics(FRONTKNEE1, targetFK1, ik_mode);
 	skel->inverseKinematics(FRONTFOOT1, targetFF1, ik_mode);
