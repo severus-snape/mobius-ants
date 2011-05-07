@@ -243,7 +243,7 @@ vec3 SplineCoaster::getFirstUp() {
 
 // sweep the cross section along the curve (helper for the big render function)
 void SplineCoaster::renderSweep(vector<SplinePoint*> &polyline, double crossSectionScale) {
-    SplinePoint* pts[3]; // pts[1] is us, pts[0] and pts[3] surround us
+    SplinePoint* pts[3]; // pts[1] is us, pts[0] and pts[2] surround us
     vector<vec2> & crossSection = profile;
     int size = (int) polyline.size();
     vec3 * newSlice = new vec3[crossSection.size()];
@@ -269,8 +269,7 @@ void SplineCoaster::renderSweep(vector<SplinePoint*> &polyline, double crossSect
             firstDir = false;
         }
         else { // after the first frame, advance with the rotation minimizing frame
-            up = advanceFrame(pts[0]->point, pts[1]->point,
-                        oldDir, right, up, dir);
+            up = advanceFrame(pts[0]->point, pts[1]->point, oldDir, right, up, dir);
         }
         right = dir ^ up;
         up = right ^ dir;
@@ -317,6 +316,7 @@ void SplineCoaster::renderSweep(vector<SplinePoint*> &polyline, double crossSect
                 glVertex3dv(&oldSlice[vn][0]);
             }
             glEnd();
+
         }
 
         // swap new and old lists
