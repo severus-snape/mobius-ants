@@ -51,6 +51,7 @@ double velocity = INITIAL_VELOCITY;
 double PE = INITIAL_PE;
 
 bool s_pressed = false;
+bool p_pressed = false;
 //****************************************************
 // Global Variables
 //****************************************************
@@ -173,7 +174,7 @@ void drawMesh(double size, const vec3& meshcolor) {
 void drawSkeleton(double size, const vec3& skelcolor) {
 	glColor3f(skelcolor[VX],skelcolor[VY],skelcolor[VZ]);
 	//glutSolidTeapot(size);
-	if (!playanim) { // if not playing an animation draw the skeleton
+	if (!p_pressed) { // if not playing an animation draw the skeleton
         skel->render(ikJoint); 
     }
 }
@@ -251,7 +252,6 @@ void drawMeshAndSkeleton(const vec3& meshcolor, const vec3& skelcolor, double t)
 
 	drawMesh(1, meshcolor);
 	drawSkeleton(1, skelcolor); 
-	skel->render(ikJoint);
 	skel->updateSkin(*mesh);
 
 	glPopMatrix();
@@ -370,11 +370,15 @@ void myKeyboardFunc (unsigned char key, int x, int y) {
 			break;
         case 'S':
         case 's':
-    	    //s_pressed = !s_pressed;
+    	    s_pressed = !s_pressed;
             break;
 		case 'U':
 		case 'u':
 			imgSaver->saveFrame();
+			break;
+		case 'P':
+		case 'p':
+			p_pressed = !p_pressed;
 			break;
         case 'V':
         case 'v':
