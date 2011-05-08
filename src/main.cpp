@@ -55,6 +55,7 @@ bool p_pressed = true;
 //****************************************************
 // Global Variables
 //****************************************************
+GLuint textures[2];
 Viewport viewport;
 UCB::ImageSaver * imgSaver;
 int frameCount = 0;
@@ -148,6 +149,19 @@ mat4 getBasis(double t, bool inv) {
 	return mat4(vec4(forward[VX], up[VX], x[VX], origin[VX]), vec4(forward[VY], up[VY], x[VY], origin[VY]), vec4(forward[VZ], up[VZ], x[VZ], origin[VZ]), vec4(0, 0, 0, 1));
 }
 
+mat4 getSkyBoxBasisForTrackCoord(double t, bool inv){
+	SplinePoint sp = coaster->sample(t);
+	vec3 forward = coaster->sampleForward(t);
+	vec3 up = coaster->sampleUp(t);
+	if(inv) up = -1 * up;
+	vec3 x = forward ^ up;
+//	vec3 origin = sp.point;
+	forward = forward.normalize();
+	up = up.normalize();
+	x = x.normalize();
+	return mat4(vec4(forward[VX], up[VX], x[VX], 0), vec4(forward[VY], up[VY], x[VY], 0), vec4(forward[VZ], up[VZ], x[VZ], 0), vec4(0, 0, 0, 1));
+}
+
 
 mat4 getCameraBasis(double t, bool inv){
 	SplinePoint sp = coaster->sample(t);
@@ -162,6 +176,59 @@ mat4 getCameraBasis(double t, bool inv){
 	return mat4(vec4(x[VX], up[VX], -forward[VX], origin[VX]), vec4(x[VY], up[VY], -forward[VY], origin[VY]), vec4(x[VZ], up[VZ], -forward[VZ], origin[VZ]), vec4(0, 0, 0, 1));
 }
 
+
+void drawSkyBox(){
+	
+    // Enable/Disable features
+    glPushAttrib(GL_ENABLE_BIT);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
+    glEnable(GL_TEXTURE_2D);
+    glDisable(GL_DEPTH_TEST);
+    glDisable(GL_LIGHTING);
+    glDisable(GL_BLEND);
+    // Just in case we set all vertices to white.
+    glColor4f(1,1,1,1);
+    // Render the front quad
+    glBindTexture(GL_TEXTURE_2D, textures[1]);
+
+
+	glBegin(GL_QUADS);
+		// Front Face
+		glTexCoord2f(0.0f, 0.0f); glVertex3f(-1.0f, -1.0f,  1.0f);	// Bottom Left Of The Texture and Quad
+		glTexCoord2f(1.0f, 0.0f); glVertex3f( 1.0f, -1.0f,  1.0f);	// Bottom Right Of The Texture and Quad
+		glTexCoord2f(1.0f, 1.0f); glVertex3f( 1.0f,  1.0f,  1.0f);	// Top Right Of The Texture and Quad
+		glTexCoord2f(0.0f, 1.0f); glVertex3f(-1.0f,  1.0f,  1.0f);	// Top Left Of The Texture and Quad
+		// Back Face
+		glTexCoord2f(1.0f, 0.0f); glVertex3f(-1.0f, -1.0f, -1.0f);	// Bottom Right Of The Texture and Quad
+		glTexCoord2f(1.0f, 1.0f); glVertex3f(-1.0f,  1.0f, -1.0f);	// Top Right Of The Texture and Quad
+		glTexCoord2f(0.0f, 1.0f); glVertex3f( 1.0f,  1.0f, -1.0f);	// Top Left Of The Texture and Quad
+		glTexCoord2f(0.0f, 0.0f); glVertex3f( 1.0f, -1.0f, -1.0f);	// Bottom Left Of The Texture and Quad
+		// Top Face
+		glTexCoord2f(0.0f, 1.0f); glVertex3f(-1.0f,  1.0f, -1.0f);	// Top Left Of The Texture and Quad
+		glTexCoord2f(0.0f, 0.0f); glVertex3f(-1.0f,  1.0f,  1.0f);	// Bottom Left Of The Texture and Quad
+		glTexCoord2f(1.0f, 0.0f); glVertex3f( 1.0f,  1.0f,  1.0f);	// Bottom Right Of The Texture and Quad
+		glTexCoord2f(1.0f, 1.0f); glVertex3f( 1.0f,  1.0f, -1.0f);	// Top Right Of The Texture and Quad
+		// Bottom Face
+		glTexCoord2f(1.0f, 1.0f); glVertex3f(-1.0f, -1.0f, -1.0f);	// Top Right Of The Texture and Quad
+		glTexCoord2f(0.0f, 1.0f); glVertex3f( 1.0f, -1.0f, -1.0f);	// Top Left Of The Texture and Quad
+		glTexCoord2f(0.0f, 0.0f); glVertex3f( 1.0f, -1.0f,  1.0f);	// Bottom Left Of The Texture and Quad
+		glTexCoord2f(1.0f, 0.0f); glVertex3f(-1.0f, -1.0f,  1.0f);	// Bottom Right Of The Texture and Quad
+		// Right face
+		glTexCoord2f(1.0f, 0.0f); glVertex3f( 1.0f, -1.0f, -1.0f);	// Bottom Right Of The Texture and Quad
+		glTexCoord2f(1.0f, 1.0f); glVertex3f( 1.0f,  1.0f, -1.0f);	// Top Right Of The Texture and Quad
+		glTexCoord2f(0.0f, 1.0f); glVertex3f( 1.0f,  1.0f,  1.0f);	// Top Left Of The Texture and Quad
+		glTexCoord2f(0.0f, 0.0f); glVertex3f( 1.0f, -1.0f,  1.0f);	// Bottom Left Of The Texture and Quad
+		// Left Face
+		glTexCoord2f(0.0f, 0.0f); glVertex3f(-1.0f, -1.0f, -1.0f);	// Bottom Left Of The Texture and Quad
+		glTexCoord2f(1.0f, 0.0f); glVertex3f(-1.0f, -1.0f,  1.0f);	// Bottom Right Of The Texture and Quad
+		glTexCoord2f(1.0f, 1.0f); glVertex3f(-1.0f,  1.0f,  1.0f);	// Top Right Of The Texture and Quad
+		glTexCoord2f(0.0f, 1.0f); glVertex3f(-1.0f,  1.0f, -1.0f);	// Top Left Of The Texture and Quad
+	glEnd();
+	
+	glPopAttrib();
+//	glPopMatrix();
+}
 
 
 // replace this with something cooler!
@@ -282,27 +349,62 @@ void display() {
 	glLoadIdentity();							// make sure transformation is "zero'd"
 	
 	
+	
     if (viewMode == VIEW_THIRDPERSON) {
+	
+		glPushMatrix();
+		glTranslatef(0, 0, -1);
+		applyMat4(viewport.orientation);
+		drawSkyBox();
+		glPopMatrix();
+		
         glTranslatef(0,-5,-50);
         applyMat4(viewport.orientation);
     }else if (viewMode == VIEW_FIRSTPERSON){
+		glPushMatrix();
+		glTranslatef(0, 0, -1);
+		mat4 basisSky = getSkyBoxBasisForTrackCoord(t, inv).inverse();
+		applyMat4(basisSky);
+		drawSkyBox();
+		glPopMatrix();
+		
+		
 		glTranslatef(0, -1, -2);
 		mat4 basis = getCameraBasis(t, inv).inverse();
 		applyMat4(basis);
 	}else if (viewMode == VIEW_SIDE1){
+		glPushMatrix();
+		glTranslatef(0, 0, -1);
+		glRotatef(90,0,1,0);
+		mat4 basisSky = getSkyBoxBasisForTrackCoord(t, inv).inverse();
+		applyMat4(basisSky);
+		drawSkyBox();
+		glPopMatrix();
+		
+		
 		glRotatef(90,0,1,0);
 		glTranslatef(6,-0.5,0);
 		mat4 basis = getCameraBasis(t, inv).inverse();
 		applyMat4(basis);
 		//applyMat4(viewport.orientation);
 	}else if (viewMode == VIEW_SIDE2){
+		glPushMatrix();
+		glTranslatef(0, 0, -1);
+		glRotatef(270,0,1,0);
+		mat4 basisSky = getSkyBoxBasisForTrackCoord(t, inv).inverse();
+		applyMat4(basisSky);
+		drawSkyBox();
+		glPopMatrix();
+		
 		glRotatef(270,0,1,0);
 		glTranslatef(-6,-0.5,0);
 		mat4 basis = getCameraBasis(t, inv).inverse();
 		applyMat4(basis);
 		//applyMat4(viewport.orientation);
 	}
-    coaster->renderWithDisplayList(100,.3,3,.2,0);
+
+	
+    coaster->renderWithDisplayList(&textures[0], 100,.3,3,.2,0);
 	
 	SplinePoint sp = coaster->sample(t);
 	//vec3 forward = coaster->sampleForward(t);
@@ -342,7 +444,17 @@ void display() {
 		t = t - floor(t);
 	}
 	
+	//Hella slow
+	
 	drawMeshAndSkeleton(vec3(1.0, 1.0, 0.0), vec3(1.0, 1.0, 1.0), t);
+	
+	drawMeshAndSkeleton(vec3(1.0, 1.0, 0.0), vec3(1.0, 1.0, 1.0), t-0.2);
+	
+	drawMeshAndSkeleton(vec3(1.0, 1.0, 0.0), vec3(1.0, 1.0, 1.0), t-0.4);
+	
+	drawMeshAndSkeleton(vec3(1.0, 1.0, 0.0), vec3(1.0, 1.0, 1.0), t-0.6);
+	
+	drawMeshAndSkeleton(vec3(1.0, 1.0, 0.0), vec3(1.0, 1.0, 1.0), t-0.8);
 	
 	//Now that we've drawn on the buffer, swap the drawing buffer and the displaying buffer.
 	glutSwapBuffers();
@@ -449,6 +561,8 @@ void myPassiveMotionFunc(int x, int y) {
 
 
 
+
+
 //-------------------------------------------------------------------------------
 /// Initialize the environment
 int main(int argc,char** argv) {
@@ -461,7 +575,7 @@ int main(int argc,char** argv) {
 	viewport.w = 600;
 	viewport.h = 600;
 
-	coaster = new SplineCoaster("track.trk");
+	
 
 /**
 	if (argc < 2) {
@@ -520,6 +634,7 @@ int main(int argc,char** argv) {
 	glEnable(GL_LIGHTING);
     glEnable(GL_DEPTH_TEST);
 
+	coaster = new SplineCoaster("track.trk", &textures[0]);
     // load a mesh
     mesh = new Mesh();
     mesh->loadFile("ant2.obj");
@@ -533,6 +648,9 @@ int main(int argc,char** argv) {
     // start a new animation
     anim = new Animation();
 
+	loadTexture("earth.png", &textures[1]);
+	//cout<<"end"<<endl;
+	
 	vector<Joint> initialJoints = skel->getJointArray();
 	FF1Initial = initialJoints[FRONTFOOT1].posn;
 	FF2Initial = initialJoints[FRONTFOOT2].posn;
