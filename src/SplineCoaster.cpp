@@ -1,4 +1,5 @@
 #include "SplineCoaster.h"
+#include "LoadImage.h"
 
 #include "global.h"
 
@@ -23,6 +24,28 @@ namespace {
         if (c2 == 0)
             return ri;
         return riL - (2/c2)*(v2*riL)*v2;
+    }
+
+
+	// get a quoted string, unless there's no quote at the start
+    // in that case we just get whatever is there.
+    string getQuoted(istream &str) {
+        string ret;
+        char temp;
+        str >> temp;
+        if (temp != '"') {
+            str.putback(temp);
+            str >> ret;
+        } else {
+            getline(str, ret, '"');
+        }
+        return ret;
+    }
+
+    void getValue(istream &str, int &val) {
+        int v;
+        if (str >> v)
+            val = v;
     }
 }
 
@@ -105,7 +128,12 @@ SplineCoaster::SplineCoaster(string filename) : globalTwist(0), globalAzimuth(0)
             linestream >> globalTwist;
         } else if (op == "azimuth") {
             linestream >> globalAzimuth;
-        }
+        } else if (op == "texture") {
+	            string textureFile = getQuoted(linestream);
+	            loadTexture(textureFile, texture);
+	            getValue(linestream, lengthRepeats);
+	            getValue(linestream, widthRepeats);
+		}
     }
 }
 

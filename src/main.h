@@ -15,5 +15,6 @@
 #include "mesh.h"
 #include "skeleton.h"
 #include "SplineCoaster.h"
+#include "LoadImage.h"
 
 #endif /* MAIN_H_ */

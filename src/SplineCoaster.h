@@ -83,7 +83,8 @@ private:
     // display list for caching sweep geometry
     GLuint DLid;
     bool hasDL;
-
+	GLuint texture;
+	int lengthRepeats, widthRepeats;
     // --- internal helper functions
     void renderSupports(int supportsPerPt, double supportSize, double groundY);
     void renderSweep(vector<SplinePoint*> &pts, double crossSectionScale);
