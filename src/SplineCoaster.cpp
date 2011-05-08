@@ -98,7 +98,7 @@ SplinePoint SplinePoint::sampleBSpline(vector<SplinePoint*>& cps, double t, bool
     return result;
 }
 
-SplineCoaster::SplineCoaster(string filename) : globalTwist(0), globalAzimuth(0), hasDL(false) {
+SplineCoaster::SplineCoaster(string filename, GLuint *texture) : globalTwist(0), globalAzimuth(0), hasDL(false) {
     ifstream f(filename.c_str());
     if (!f) {
         UCBPrint("SplineCoaster", "Couldn't load file " << filename);
@@ -280,6 +280,7 @@ void SplineCoaster::renderSweep(vector<SplinePoint*> &polyline, double crossSect
     bool firstDir = true;
     for (int i = 1; i < size-1; i++) {
         double percent = double(i % size) / (double(size-3));
+		double deltaPercent = 1.0 / (double(size-3));
         for (int c = -1; c <= 1; c++) { // populate local pts
             pts[c+1] = polyline[ (i + size + c) %  size ];
         }
@@ -331,17 +332,82 @@ void SplineCoaster::renderSweep(vector<SplinePoint*> &polyline, double crossSect
         }
 
         if (i > 1) {
+	/*
+			glBegin(GL_QUAD_STRIP);
+			int csize = (int) crossSection.size();
+			for (int v = 0; v < csize; v++) {
+	                int vn = v % csize;
+	                vec3 tan0 = oldSlice[(vn+1)%csize]-oldSlice[vn]; tan0.normalize();
+	                vec3 tan1 = newSlice[(vn+1)%csize]-newSlice[vn]; tan1.normalize();
+
+	                //glColor3f(v%4!=0,v%4!=1,v%4!=2);
+	                double percentAround = v / double(csize); // the percent around the cross section
+
+					vec3 n = (tan0^oldDir);
+					n.normalize();
+					glNormal3dv(&n[0]);
+
+	                // @TODO: SET TEXTURE COORDINATE
+	                // HINT: use percent, deltaPercent, percentAround to determine where on the curves you are
+	                // HINT: use lengthRepeats and widthRepeats to determine how much to repeat
+					double texLength = fmod((lengthRepeats*percent),1);
+					double texWidth = fmod((widthRepeats*percentAround),1);
+					glTexCoord2f(texLength, texWidth);
+
+	                // @TODO: SET TANGENT AND BITANGENT
+	                // HINT: Use the glVertexAttrib3fARB, like:
+	                // glVertexAttrib3dARBv(tangentAttrib, x=?, y=?, z=?);
+	                // glVertexAttrib3dARBv(bitangentAttrib, x=?, y=?, z=?);
+				//	glVertexAttrib3dvARB(shader.getTangentAttrib(),&oldSlice[vn][0]);
+				//	glVertexAttrib3dvARB(shader.getBitangentAttrib(),&oldSlice[vn][0]);
+	                glVertex3dv(&oldSlice[vn][0]);
+
+	                vec3 n2 = (tan1^dir);
+	                n2.normalize();
+	                glNormal3dv(&n2[0]);
+
+	                // @TODO: SET TEXTURE COORDINATE
+	                // HINT: use percent, deltaPercent, percentAround to determine where on the curves you are
+	                // HINT: use lengthRepeats and widthRepeats to determine how much to repeat
+					texLength = fmod((lengthRepeats*(percent+deltaPercent)),1);
+					texWidth = fmod((widthRepeats*percentAround),1);
+					glTexCoord2f(texLength, texWidth);
+
+	                // @TODO: SET TANGENT AND BITANGENT
+	                // HINT: Use the glVertexAttrib3fARB, like:
+	                // glVertexAttrib3dARBv(tangentAttrib, x=?, y=?, z=?);
+	                // glVertexAttrib3dARBv(bitangentAttrib, x=?, y=?, z=?);
+	              //  glVertexAttrib3dvARB(shader.getTangentAttrib(),&newSlice[vn][0]);
+				//	glVertexAttrib3dvARB(shader.getBitangentAttrib(),&newSlice[vn][0]);
+	                glVertex3dv(&newSlice[vn][0]);
+
+	         
+			}
+			glEnd();*/	
+	
             glBegin(GL_QUADS);
             for (int v = 0; v < (int) crossSection.size(); v++) {
                 int vn = (v + 1) % int(crossSection.size());
-                glColor3f(v%4!=0,v%4!=1,v%4!=2);
+                glColor3f(1,1,1);
 				vec3 n = (newSlice[v] - oldSlice[v])^(newSlice[vn] - oldSlice[v]);
 				n.normalize();
 				glNormal3dv(&n[0]);
+				double texLength = fmod((lengthRepeats*percent),1);
+				double texLength1 = fmod((lengthRepeats*(percent+deltaPercent)),1);
+				
+				glTexCoord2f(0, texLength);
                 glVertex3dv(&oldSlice[v][0]);
+
+				glTexCoord2f(1, texLength);
+				glVertex3dv(&oldSlice[vn][0]);
+				
+				glTexCoord2f(1, texLength1);
+				glVertex3dv(&newSlice[vn][0]);
+  
+				glTexCoord2f(0, texLength);
                 glVertex3dv(&newSlice[v][0]);
-                glVertex3dv(&newSlice[vn][0]);
-                glVertex3dv(&oldSlice[vn][0]);
+				
+                
             }
             glEnd();
 
@@ -351,13 +417,23 @@ void SplineCoaster::renderSweep(vector<SplinePoint*> &polyline, double crossSect
         vec3 *temp = newSlice;
         newSlice = oldSlice;
         oldSlice = temp;
+
+		oldDir = dir;
     }
     delete [] newSlice;
     delete [] oldSlice;
 }
 
 // the big render function
-void SplineCoaster::render(int samplesPerPt, double crossSectionScale, int supportsPerPt, double supportSize, double groundY) {
+void SplineCoaster::render(GLuint * texture, int samplesPerPt, double crossSectionScale, int supportsPerPt, double supportSize, double groundY) {
+	//glActiveTexture(GL_TEXTURE0);
+	glPushAttrib(GL_ENABLE_BIT);
+	//glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
+    //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
+    glEnable(GL_TEXTURE_2D);
+    glBindTexture(GL_TEXTURE_2D, *texture);
+
+	
     int totalSamples = (int) bsplinePts.size() * samplesPerPt;
 
     vector<SplinePoint*> polyline;
@@ -373,7 +449,7 @@ void SplineCoaster::render(int samplesPerPt, double crossSectionScale, int suppo
     //renderSupports(supportsPerPt, supportSize, groundY);
 
     renderSweep(polyline, crossSectionScale);
-
+	glPopAttrib();
     freePolyline(polyline);
 }
 

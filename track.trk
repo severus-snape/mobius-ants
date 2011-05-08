@@ -5,6 +5,8 @@
 # global twist 20 degrees - i.e., a linearly increasing azimuth, starting at 0 degrees and ending at 20 degrees.
 twist 180
 
+texture "fractal.png" 40 10
+
 # a rectangular cross section
 p -8 1
 p 8 1

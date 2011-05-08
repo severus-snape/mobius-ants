@@ -55,7 +55,7 @@ bool p_pressed = false;
 //****************************************************
 // Global Variables
 //****************************************************
-GLuint skyboxtexture;
+GLuint textures[2];
 Viewport viewport;
 UCB::ImageSaver * imgSaver;
 int frameCount = 0;
@@ -190,7 +190,7 @@ void drawSkyBox(){
     // Just in case we set all vertices to white.
     glColor4f(1,1,1,1);
     // Render the front quad
-    glBindTexture(GL_TEXTURE_2D, skyboxtexture);
+    glBindTexture(GL_TEXTURE_2D, textures[1]);
 
 
 	glBegin(GL_QUADS);
@@ -402,7 +402,7 @@ void display() {
 	}
 
 	
-    coaster->renderWithDisplayList(100,.3,3,.2,0);
+    coaster->renderWithDisplayList(&textures[0], 100,.3,3,.2,0);
 	
 	SplinePoint sp = coaster->sample(t);
 	//vec3 forward = coaster->sampleForward(t);
@@ -442,7 +442,17 @@ void display() {
 		t = t - floor(t);
 	}
 	
+	//Hella slow
+	
 	drawMeshAndSkeleton(vec3(1.0, 1.0, 0.0), vec3(1.0, 1.0, 1.0), t);
+	
+	drawMeshAndSkeleton(vec3(1.0, 1.0, 0.0), vec3(1.0, 1.0, 1.0), t-0.2);
+	
+	drawMeshAndSkeleton(vec3(1.0, 1.0, 0.0), vec3(1.0, 1.0, 1.0), t-0.4);
+	
+	drawMeshAndSkeleton(vec3(1.0, 1.0, 0.0), vec3(1.0, 1.0, 1.0), t-0.6);
+	
+	drawMeshAndSkeleton(vec3(1.0, 1.0, 0.0), vec3(1.0, 1.0, 1.0), t-0.8);
 	
 	//Now that we've drawn on the buffer, swap the drawing buffer and the displaying buffer.
 	glutSwapBuffers();
@@ -563,7 +573,7 @@ int main(int argc,char** argv) {
 	viewport.w = 600;
 	viewport.h = 600;
 
-	coaster = new SplineCoaster("track.trk");
+	
 
 /**
 	if (argc < 2) {
@@ -622,6 +632,7 @@ int main(int argc,char** argv) {
 	glEnable(GL_LIGHTING);
     glEnable(GL_DEPTH_TEST);
 
+	coaster = new SplineCoaster("track.trk", &textures[0]);
     // load a mesh
     mesh = new Mesh();
     mesh->loadFile("ant2.obj");
@@ -635,7 +646,8 @@ int main(int argc,char** argv) {
     // start a new animation
     anim = new Animation();
 
-	loadTexture("earth.png", skyboxtexture);
+	loadTexture("earth.png", &textures[1]);
+	//cout<<"end"<<endl;
 	
 	vector<Joint> initialJoints = skel->getJointArray();
 	FF1Initial = initialJoints[FRONTFOOT1].posn;

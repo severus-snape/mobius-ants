@@ -17,7 +17,7 @@ using namespace std;
 bool loadBitmap(string filename, FIBITMAP* &bitmap);
 
 // load a texture into opengl with freeimage
-bool loadTexture(string filename, GLuint &texture);
+bool loadTexture(string filename, GLuint * texture);
 
 // load a height map and normal map (computed from the height map) into opengl with freeimage
 bool loadHeightAndNormalMaps(string filename, GLuint &heightmap, GLuint &normalmap, double zScale);

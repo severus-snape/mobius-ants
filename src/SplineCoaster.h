@@ -37,16 +37,16 @@ struct SplinePoint {
 // class to render and sample track
 class SplineCoaster {
 public:
-    SplineCoaster(string filename);
+    SplineCoaster(string filename, GLuint *texture);
 
     // renders the coaster
-    void render(int samplesPerPt, double crossSectionScale=.2, int supportsPerPt=3, double supportSize=.1, double groundY=0.0);
+    void render(GLuint *texture, int samplesPerPt, double crossSectionScale=.2, int supportsPerPt=3, double supportSize=.1, double groundY=0.0);
     // renders the coaster with a cache.  Ignores parameters after display list is set; use clearDisplayList() before updating parameters
-    void renderWithDisplayList(int samplesPerPt, double crossSectionScale=.2, int supportsPerPt=3, double supportSize=.1, double groundY=0.0) {
+    void renderWithDisplayList(GLuint *texture, int samplesPerPt, double crossSectionScale=.2, int supportsPerPt=3, double supportSize=.1, double groundY=0.0) {
         if (!hasDL) {
             DLid = glGenLists(1);
             glNewList(DLid, GL_COMPILE);
-            render(samplesPerPt, crossSectionScale, supportsPerPt, supportSize, groundY);
+            render(texture, samplesPerPt, crossSectionScale, supportsPerPt, supportSize, groundY);
             glEndList();
             hasDL = true;
         }
@@ -83,7 +83,6 @@ private:
     // display list for caching sweep geometry
     GLuint DLid;
     bool hasDL;
-	GLuint texture;
 	int lengthRepeats, widthRepeats;
     // --- internal helper functions
     void renderSupports(int supportsPerPt, double supportSize, double groundY);

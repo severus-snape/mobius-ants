@@ -22,12 +22,13 @@ bool loadBitmap(string filename, FIBITMAP* &bitmap) {
 }
 
 // load a texture into opengl with freeimage
-bool loadTexture(string filename, GLuint &texture) {
+bool loadTexture(string filename, GLuint * texture) {
     FIBITMAP *bitmap = NULL;
     if (!loadBitmap(filename, bitmap))
         return false;
 
     // convert to 32 bit bit-depth
+
     FIBITMAP *bitmap32 = FreeImage_ConvertTo32Bits(bitmap);
     FreeImage_Unload(bitmap);
     if (!bitmap32)
@@ -41,12 +42,16 @@ bool loadTexture(string filename, GLuint &texture) {
 
     // get bit order
     int order = GL_BGRA;
-
+	
     // upload texture to opengl
-    glGenTextures(1, &texture);
-    glBindTexture(GL_TEXTURE_2D, texture);
+    glGenTextures(1, texture);
+
+    glBindTexture(GL_TEXTURE_2D, *texture);
+
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
     gluBuild2DMipmaps(GL_TEXTURE_2D, 4, w, h, order, GL_UNSIGNED_BYTE, (GLvoid*)bits);
 
     // forget our copy of the bitmap now that it's stored the card
