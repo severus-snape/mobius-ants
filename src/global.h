@@ -19,9 +19,11 @@
 #include <cmath>
 
 #ifdef OSX
+#include <GL/glew.h>
 #include <GLUT/glut.h>
 #include <OpenGL/glu.h>
 #else
+#include <GL/glew.h>
 #include <GL/glut.h>
 #include <GL/glu.h>
 #endif
@@ -30,5 +32,6 @@
 #include <algebra3.h>
 //Include our Image Saving library.
 #include "UCB/ImageSaver.h"
+#include "FreeImage.h"
 
 #endif /* GLOBAL_H_ */

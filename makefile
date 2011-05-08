@@ -6,7 +6,7 @@
 #Code   -------------------------------
 
 ### YOU CAN CHANGE THESE VARIABLES AS YOU ADD CODE:
-TARGET := ik
+TARGET := mobius-ants
 SOURCES := $(wildcard ./src/UCB/*.cpp) $(wildcard ./src/*.cpp)
 
 #Libraries -------------------------------
@@ -16,7 +16,7 @@ SOURCES := $(wildcard ./src/UCB/*.cpp) $(wildcard ./src/*.cpp)
 ifeq ($(shell sw_vers 2>/dev/null | grep Mac | awk '{ print $$2}'),Mac)
 	#Assume Mac
 	INCLUDE := -I./include/ -I/usr/X11/include
-	LIBRARY := -L./lib/ \
+	LIBRARY := -L./lib/mac/ \
     	-L"/System/Library/Frameworks/OpenGL.framework/Libraries" \
     	-lGL -lGLU -lm -lstdc++
 	FRAMEWORK := -framework GLUT -framework OpenGL
@@ -26,8 +26,8 @@ else
 	#Assume X11
 	INCLUDE := -I./include/ -I/usr/X11R6/include -I/sw/include \
 		-I/usr/sww/include -I/usr/sww/pkg/Mesa/include
-	LIBRARY := -L./lib/ -L/usr/X11R6/lib -L/sw/lib -L/usr/sww/lib \
-		-L/usr/sww/bin -L/usr/sww/pkg/Mesa/lib -lglut -lGLU -lGL -lX11
+	LIBRARY := -L./lib/nix -L/usr/X11R6/lib -L/sw/lib -L/usr/sww/lib \
+		-L/usr/sww/bin -L/usr/sww/pkg/Mesa/lib -lglut -lGLU -lGL -lX11 -lGLEW
 	FRAMEWORK := 
 	MACROS := 
 	PLATFORM := *Nix
@@ -48,14 +48,12 @@ OBJECTS = $(SOURCES:.cpp=.o)
 
 $(TARGET): $(OBJECTS)
 	@echo "Linking .o files into:  $(TARGET)"
-	@$(CXX) $(LDFLAGS) $(OBJECTS) -o $(TARGET)
+	@$(CXX) $(LDFLAGS) $(OBJECTS) -o $(TARGET) -lfreeimage -lGLEW
 	
-default: $(TARGET) 
-	
-all: default
+all: $(TARGET)
 
 clean:
 	@echo "Removing compiled files:  $<" 
 	/bin/rm -f $(OBJECTS) $(TARGET)
 
-
+.DEFAULT_GOAL := all

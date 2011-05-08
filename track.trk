@@ -6,10 +6,10 @@
 twist 180
 
 # a rectangular cross section
-p -8 -1
+p -8 1
+p 8 1
 p 8 -1
-p 8 -3
-p -8 -3
+p -8 -1
 
 # a short wavy loop.
 # local azimuths of 80 degrees are specified at the three low points of the track, where the speed is highest.
