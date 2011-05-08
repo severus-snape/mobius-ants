@@ -55,7 +55,7 @@ bool p_pressed = true;
 //****************************************************
 // Global Variables
 //****************************************************
-GLuint textures[2];
+GLuint textures[7];
 Viewport viewport;
 UCB::ImageSaver * imgSaver;
 int frameCount = 0;
@@ -190,35 +190,55 @@ void drawSkyBox(){
     // Just in case we set all vertices to white.
     glColor4f(1,1,1,1);
     // Render the front quad
-    glBindTexture(GL_TEXTURE_2D, textures[1]);
+    //glBindTexture(GL_TEXTURE_2D, textures[1]);
 
-
+	glBindTexture(GL_TEXTURE_2D, textures[0]);
 	glBegin(GL_QUADS);
 		// Front Face
 		glTexCoord2f(0.0f, 0.0f); glVertex3f(-1.0f, -1.0f,  1.0f);	// Bottom Left Of The Texture and Quad
 		glTexCoord2f(1.0f, 0.0f); glVertex3f( 1.0f, -1.0f,  1.0f);	// Bottom Right Of The Texture and Quad
 		glTexCoord2f(1.0f, 1.0f); glVertex3f( 1.0f,  1.0f,  1.0f);	// Top Right Of The Texture and Quad
 		glTexCoord2f(0.0f, 1.0f); glVertex3f(-1.0f,  1.0f,  1.0f);	// Top Left Of The Texture and Quad
+	glEnd();
+
+	glBindTexture(GL_TEXTURE_2D, textures[1]);
+	glBegin(GL_QUADS);
 		// Back Face
 		glTexCoord2f(1.0f, 0.0f); glVertex3f(-1.0f, -1.0f, -1.0f);	// Bottom Right Of The Texture and Quad
 		glTexCoord2f(1.0f, 1.0f); glVertex3f(-1.0f,  1.0f, -1.0f);	// Top Right Of The Texture and Quad
 		glTexCoord2f(0.0f, 1.0f); glVertex3f( 1.0f,  1.0f, -1.0f);	// Top Left Of The Texture and Quad
 		glTexCoord2f(0.0f, 0.0f); glVertex3f( 1.0f, -1.0f, -1.0f);	// Bottom Left Of The Texture and Quad
+	glEnd();
+
+	glBindTexture(GL_TEXTURE_2D, textures[2]);
+	glBegin(GL_QUADS);
 		// Top Face
 		glTexCoord2f(0.0f, 1.0f); glVertex3f(-1.0f,  1.0f, -1.0f);	// Top Left Of The Texture and Quad
 		glTexCoord2f(0.0f, 0.0f); glVertex3f(-1.0f,  1.0f,  1.0f);	// Bottom Left Of The Texture and Quad
 		glTexCoord2f(1.0f, 0.0f); glVertex3f( 1.0f,  1.0f,  1.0f);	// Bottom Right Of The Texture and Quad
 		glTexCoord2f(1.0f, 1.0f); glVertex3f( 1.0f,  1.0f, -1.0f);	// Top Right Of The Texture and Quad
+	glEnd();
+
+	glBindTexture(GL_TEXTURE_2D, textures[3]);
+	glBegin(GL_QUADS);
 		// Bottom Face
 		glTexCoord2f(1.0f, 1.0f); glVertex3f(-1.0f, -1.0f, -1.0f);	// Top Right Of The Texture and Quad
 		glTexCoord2f(0.0f, 1.0f); glVertex3f( 1.0f, -1.0f, -1.0f);	// Top Left Of The Texture and Quad
 		glTexCoord2f(0.0f, 0.0f); glVertex3f( 1.0f, -1.0f,  1.0f);	// Bottom Left Of The Texture and Quad
 		glTexCoord2f(1.0f, 0.0f); glVertex3f(-1.0f, -1.0f,  1.0f);	// Bottom Right Of The Texture and Quad
+	glEnd();
+
+	glBindTexture(GL_TEXTURE_2D, textures[4]);
+	glBegin(GL_QUADS);
 		// Right face
 		glTexCoord2f(1.0f, 0.0f); glVertex3f( 1.0f, -1.0f, -1.0f);	// Bottom Right Of The Texture and Quad
 		glTexCoord2f(1.0f, 1.0f); glVertex3f( 1.0f,  1.0f, -1.0f);	// Top Right Of The Texture and Quad
 		glTexCoord2f(0.0f, 1.0f); glVertex3f( 1.0f,  1.0f,  1.0f);	// Top Left Of The Texture and Quad
 		glTexCoord2f(0.0f, 0.0f); glVertex3f( 1.0f, -1.0f,  1.0f);	// Bottom Left Of The Texture and Quad
+	glEnd();
+
+	glBindTexture(GL_TEXTURE_2D, textures[5]);
+	glBegin(GL_QUADS);
 		// Left Face
 		glTexCoord2f(0.0f, 0.0f); glVertex3f(-1.0f, -1.0f, -1.0f);	// Bottom Left Of The Texture and Quad
 		glTexCoord2f(1.0f, 0.0f); glVertex3f(-1.0f, -1.0f,  1.0f);	// Bottom Right Of The Texture and Quad
@@ -404,7 +424,7 @@ void display() {
 	}
 
 	
-    coaster->renderWithDisplayList(&textures[0], 100,.3,3,.2,0);
+    coaster->renderWithDisplayList(&textures[6], 100,.3,3,.2,0);
 	
 	SplinePoint sp = coaster->sample(t);
 	//vec3 forward = coaster->sampleForward(t);
@@ -448,13 +468,13 @@ void display() {
 	
 	drawMeshAndSkeleton(vec3(1.0, 1.0, 0.0), vec3(1.0, 1.0, 1.0), t);
 	
-	drawMeshAndSkeleton(vec3(1.0, 1.0, 0.0), vec3(1.0, 1.0, 1.0), t-0.2);
+	//drawMeshAndSkeleton(vec3(1.0, 1.0, 0.0), vec3(1.0, 1.0, 1.0), t-0.2);
 	
-	drawMeshAndSkeleton(vec3(1.0, 1.0, 0.0), vec3(1.0, 1.0, 1.0), t-0.4);
+	//drawMeshAndSkeleton(vec3(1.0, 1.0, 0.0), vec3(1.0, 1.0, 1.0), t-0.4);
 	
-	drawMeshAndSkeleton(vec3(1.0, 1.0, 0.0), vec3(1.0, 1.0, 1.0), t-0.6);
+	//drawMeshAndSkeleton(vec3(1.0, 1.0, 0.0), vec3(1.0, 1.0, 1.0), t-0.6);
 	
-	drawMeshAndSkeleton(vec3(1.0, 1.0, 0.0), vec3(1.0, 1.0, 1.0), t-0.8);
+	//drawMeshAndSkeleton(vec3(1.0, 1.0, 0.0), vec3(1.0, 1.0, 1.0), t-0.8);
 	
 	//Now that we've drawn on the buffer, swap the drawing buffer and the displaying buffer.
 	glutSwapBuffers();
@@ -634,7 +654,7 @@ int main(int argc,char** argv) {
 	glEnable(GL_LIGHTING);
     glEnable(GL_DEPTH_TEST);
 
-	coaster = new SplineCoaster("track.trk", &textures[0]);
+	coaster = new SplineCoaster("track.trk", &textures[6]);
     // load a mesh
     mesh = new Mesh();
     mesh->loadFile("ant2.obj");
@@ -648,7 +668,13 @@ int main(int argc,char** argv) {
     // start a new animation
     anim = new Animation();
 
-	loadTexture("earth.png", &textures[1]);
+	loadTexture("Front.bmp", &textures[0]);
+	loadTexture("Back.bmp", &textures[1]);
+	loadTexture("Up.bmp", &textures[2]);
+	loadTexture("Down.bmp", &textures[3]);
+	loadTexture("Right.bmp", &textures[5]);
+	loadTexture("Left.bmp", &textures[4]);
+		
 	//cout<<"end"<<endl;
 	
 	vector<Joint> initialJoints = skel->getJointArray();
