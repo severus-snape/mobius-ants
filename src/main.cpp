@@ -209,8 +209,17 @@ void drawMeshAndSkeleton(const vec3& meshcolor, const vec3& skelcolor, double t)
 	vec3 point = coaster->sample(t).point;
 	vec3 forwardPoint = coaster->sample(t+(0.015)).point;
 	vec3 backPoint = coaster->sample(t-(0.01)).point;
-	double addFront = (meshBasis.inverse()*forwardPoint - meshBasis.inverse()*point)[1];
-	double addBack = (meshBasis.inverse()*backPoint - meshBasis.inverse()*point)[1];
+	vec3 pNormal = coaster->sampleUp(t);
+	vec3 fNormal = coaster->sampleUp(t+0.015);
+	vec3 bNormal = coaster->sampleUp(t-0.01);
+	double fAngle = acos((fNormal*pNormal)/(fNormal.length()*pNormal.length()));
+	double bAngle = acos((bNormal*pNormal)/(bNormal.length()*pNormal.length()));
+	double addFront = 15*(sin(fAngle))*(meshBasis.inverse()*forwardPoint - meshBasis.inverse()*point)[1];
+	double addBack = 15*(sin(bAngle))*(meshBasis.inverse()*point-meshBasis.inverse()*backPoint)[1];
+	if(inv == true){
+		addFront = -addFront;
+		addBack = -addBack;
+	}
 
 	vec3 targetFF1 = vec3(FF1Initial[0],FF1Initial[1]+xInterp1,FF1Initial[2]-(yInterp1+addFront));
 	vec3 targetFK1 = vec3(FK1Initial[0],FK1Initial[1]+(xInterp1/2),FK1Initial[2]-((yInterp1+addFront)/2));
@@ -219,10 +228,10 @@ void drawMeshAndSkeleton(const vec3& meshcolor, const vec3& skelcolor, double t)
 
 	//vec3 targetBF1 = vec3(BF1Initial[0],BF1Initial[1]+xInterp2,BF1Initial[2]-yInterp2);
 	//vec3 targetBF2 = vec3(BF2Initial[0],BF2Initial[1]+xInterp1,BF2Initial[2]-yInterp1);
-	vec3 targetBK1 = vec3(BK1Initial[0],BK1Initial[1]+(xInterp2/2),BK1Initial[2]-((yInterp2+addBack)/2));
-	vec3 targetBK2 = vec3(BK2Initial[0],BK2Initial[1]+(xInterp1/2),BK2Initial[2]-((yInterp1+addBack)/2));
-	vec3 targetBA1 = vec3(BA1Initial[0],BA1Initial[1]+xInterp2,BA1Initial[2]-(yInterp2+addBack));
-	vec3 targetBA2 = vec3(BA2Initial[0],BA2Initial[1]+xInterp1,BA2Initial[2]-(yInterp1+addBack));
+	vec3 targetBK1 = vec3(BK1Initial[0],BK1Initial[1]+(xInterp2/2),BK1Initial[2]-(yInterp2/2)+addBack);
+	vec3 targetBK2 = vec3(BK2Initial[0],BK2Initial[1]+(xInterp1/2),BK2Initial[2]-(yInterp1/2)+addBack);
+	vec3 targetBA1 = vec3(BA1Initial[0],BA1Initial[1]+xInterp2,BA1Initial[2]-yInterp2+addBack);
+	vec3 targetBA2 = vec3(BA2Initial[0],BA2Initial[1]+xInterp1,BA2Initial[2]-yInterp1+addBack);
 
 	skel->inverseKinematics(FRONTKNEE1, targetFK1, ik_mode);
 	skel->inverseKinematics(FRONTFOOT1, targetFF1, ik_mode);
@@ -247,7 +256,7 @@ void drawMeshAndSkeleton(const vec3& meshcolor, const vec3& skelcolor, double t)
 	//vec3 HeTarget = vec3(HeInitial[0]+(0.5*sin(20*PI*t)),HeInitial[1],HeInitial[2]+(0.5*sin(20*PI*t)));
 	//skel->inverseKinematics(HEAD, HeTarget, ik_mode);
 
-	glTranslatef(0,0.4,0);
+	glTranslatef(0,1,0);
 	glRotatef(90,1,0,0);
 
 	drawMesh(1, meshcolor);
@@ -280,7 +289,7 @@ void display() {
 		applyMat4(basis);
 	}else if (viewMode == VIEW_SIDE1){
 		glRotatef(90,0,1,0);
-		glTranslatef(6,-1.5,0);
+		glTranslatef(6,-0.5,0);
 		mat4 basis = getCameraBasis(t, inv).inverse();
 		applyMat4(basis);
 		//applyMat4(viewport.orientation);

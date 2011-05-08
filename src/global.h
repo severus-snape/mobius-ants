@@ -33,5 +33,6 @@
 //Include our Image Saving library.
 #include "UCB/ImageSaver.h"
 #include "FreeImage.h"
+//#include "FreeImage/Dist/FreeImage.h"
 
 #endif /* GLOBAL_H_ */
