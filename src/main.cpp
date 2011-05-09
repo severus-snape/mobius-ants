@@ -283,12 +283,12 @@ void drawMeshAndSkeleton(const vec3& meshcolor, const vec3& skelcolor, double t)
 	double yInterp1 = (30*PI)*t;
 	double yInterp2 = ((30*PI)*t)+PI;
 	if(cos(yInterp1)>0){
-		yInterp1 = 0.4*cos(yInterp1);
+		yInterp1 = 0.6*cos(yInterp1);
 	} else {
 		yInterp1 = 0;
 	}
 	if(cos(yInterp2)>0){
-		yInterp2 = 0.4*cos(yInterp2);
+		yInterp2 = 0.6*cos(yInterp2);
 	} else {
 		yInterp2 = 0;
 	}
@@ -307,8 +307,8 @@ void drawMeshAndSkeleton(const vec3& meshcolor, const vec3& skelcolor, double t)
 		addFront = -addFront;
 		addBack = -addBack;
 	}*/
-	forwardPoint = 4*meshBasis.inverse()*forwardPoint;
-	backPoint = 4*meshBasis.inverse()*backPoint;
+	forwardPoint = 10*meshBasis.inverse()*forwardPoint;
+	backPoint = 10*meshBasis.inverse()*backPoint;
 
 	vec3 targetFF1 = vec3(FF1Initial[0],FF1Initial[1]+xInterp1,FF1Initial[2]-yInterp1-forwardPoint[1]);
 	vec3 targetFK1 = vec3(FK1Initial[0],FK1Initial[1]+(xInterp1/2),FK1Initial[2]-(yInterp1/2));
@@ -345,7 +345,7 @@ void drawMeshAndSkeleton(const vec3& meshcolor, const vec3& skelcolor, double t)
 	//vec3 HeTarget = vec3(HeInitial[0]+(0.5*sin(20*PI*t)),HeInitial[1],HeInitial[2]+(0.5*sin(20*PI*t)));
 	//skel->inverseKinematics(HEAD, HeTarget, ik_mode);
 
-	glTranslatef(0,1,0);
+	glTranslatef(0,1.4,0);
 	glRotatef(90,1,0,0);
 
 	drawMesh(1, meshcolor);
@@ -403,7 +403,7 @@ void display() {
 		
 		
 		glRotatef(90,0,1,0);
-		glTranslatef(6,-0.5,0);
+		glTranslatef(8,-0.5,0);
 		mat4 basis = getCameraBasis(t, inv).inverse();
 		applyMat4(basis);
 		//applyMat4(viewport.orientation);
@@ -661,7 +661,7 @@ int main(int argc,char** argv) {
 	// load a matching skeleton
     skel = new Skeleton();
     skel->loadPinocchioFile("skeleton.out");
-    mesh->centerAndScale(*skel, 4);
+    mesh->centerAndScale(*skel, 6);
     // load the correspondence between skeleton and mesh
     skel->initBoneWeights("attachment.out", *mesh);
     skel->updateSkin(*mesh);
@@ -687,10 +687,10 @@ int main(int argc,char** argv) {
 	H2Initial = initialJoints[HIP2].posn;
 
 	//BF1Initial = vec3(FF1Initial[0],FF1Initial[1]-2,FF1Initial[2]);
-	BA1Initial = vec3(FF1Initial[0],FF1Initial[1]-2,FF1Initial[2]);
+	BA1Initial = vec3(FF1Initial[0],FF1Initial[1]-3,FF1Initial[2]);
 	BK1Initial = initialJoints[BACKKNEE1].posn;
 	//BF2Initial = vec3(FF2Initial[0],FF2Initial[1]-2,FF2Initial[2]);
-	BA2Initial = vec3(FF2Initial[0],FF2Initial[1]-2,FF2Initial[2]);
+	BA2Initial = vec3(FF2Initial[0],FF2Initial[1]-3,FF2Initial[2]);
 	BK2Initial = initialJoints[BACKKNEE2].posn;
 
 	S1Initial = initialJoints[SHOULDER1].posn;
