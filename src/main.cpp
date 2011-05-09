@@ -466,7 +466,7 @@ void display() {
 	
 	//Hella slow
 	
-	drawMeshAndSkeleton(vec3(1.0, 1.0, 0.0), vec3(1.0, 1.0, 1.0), t);
+	drawMeshAndSkeleton(vec3(0.5, 0.2, 1.0), vec3(1.0, 1.0, 1.0), t);
 	
 	//drawMeshAndSkeleton(vec3(1.0, 1.0, 0.0), vec3(1.0, 1.0, 1.0), t-0.2);
 	
