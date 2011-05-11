@@ -61,7 +61,7 @@ UCB::ImageSaver * imgSaver;
 int frameCount = 0;
 double t = 0;
 SplineCoaster *coaster;
-enum {VIEW_FIRSTPERSON, VIEW_THIRDPERSON, VIEW_SIDE1, VIEW_SIDE2, VIEW_MAX};
+enum {VIEW_FIRSTPERSON, VIEW_THIRDPERSON, VIEW_SIDE, VIEW_MAX};
 int viewMode = VIEW_THIRDPERSON;
 bool inv = false;
 
@@ -389,10 +389,10 @@ void display() {
 		glPopMatrix();
 		
 		
-		glTranslatef(0, -1, -2);
+		glTranslatef(0, -3, 0);
 		mat4 basis = getCameraBasis(t, inv).inverse();
 		applyMat4(basis);
-	}else if (viewMode == VIEW_SIDE1){
+	}else if (viewMode == VIEW_SIDE){
 		glPushMatrix();
 		glTranslatef(0, 0, -1);
 		glRotatef(90,0,1,0);
@@ -403,21 +403,7 @@ void display() {
 		
 		
 		glRotatef(90,0,1,0);
-		glTranslatef(8,-0.5,0);
-		mat4 basis = getCameraBasis(t, inv).inverse();
-		applyMat4(basis);
-		//applyMat4(viewport.orientation);
-	}else if (viewMode == VIEW_SIDE2){
-		glPushMatrix();
-		glTranslatef(0, 0, -1);
-		glRotatef(270,0,1,0);
-		mat4 basisSky = getSkyBoxBasisForTrackCoord(t, inv).inverse();
-		applyMat4(basisSky);
-		drawSkyBox();
-		glPopMatrix();
-		
-		glRotatef(270,0,1,0);
-		glTranslatef(-6,-0.5,0);
+		glTranslatef(8,-2,0.5);
 		mat4 basis = getCameraBasis(t, inv).inverse();
 		applyMat4(basis);
 		//applyMat4(viewport.orientation);
@@ -649,6 +635,15 @@ int main(int argc,char** argv) {
        glLightfv(GL_LIGHT2, GL_POSITION, pos);
        glEnable(GL_LIGHT2);
     }
+	/*{
+		float ambient[3] = { 1, 1, 1 };
+       float diffuse[3] = { 1, 1, 1 };
+       float pos[4] = { 0, 0, 10, 0 };
+       glLightfv(GL_LIGHT3, GL_AMBIENT, ambient);
+       glLightfv(GL_LIGHT3, GL_DIFFUSE, diffuse);
+       glLightfv(GL_LIGHT3, GL_POSITION, pos);
+       glEnable(GL_LIGHT3);
+	}*/
     glColorMaterial(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE);
     glEnable(GL_COLOR_MATERIAL);
 	glEnable(GL_LIGHTING);
